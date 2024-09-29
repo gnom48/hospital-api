@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: db_postgres
+    image: postgres:15.3-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: postgres
+    ports:
+      - "8085:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - shared-data:/shared
+    restart: always
+    networks:
+      - network
+
+  account:
+    build: ./account
+    ports:
+      - "8081:8081"  
+    volumes:
+      - shared-data:/shared
+    restart: always
+    networks:
+      - network
+
+  document:
+    build: ./account
+    ports:
+      - "8084:8084" 
+    volumes:
+      - shared-data:/shared
+    restart: always
+    networks:
+      - network
+
+  hospital:
+    build: ./account
+    ports:
+      - "8082:8082"  
+    volumes:
+      - shared-data:/shared
+    restart: always
+    networks:
+      - network
+
+  timetable:
+    build: ./account
+    ports:
+      - "8083:8083"
+    volumes:
+      - shared-data:/shared
+    restart: always
+    networks:
+      - network
+
+volumes:
+  postgres-data:
+  shared-data:
+
+networks:
+  network:
+    driver: bridge
