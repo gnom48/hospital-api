@@ -3,3 +3,5 @@
 2. Hospital URL: http://localhost:8082/ui-swagger
 3. Timetable URL: http://localhost:8083/ui-swagger
 4. Document URL: http://localhost:8084/ui-swagger
+
+## Модуль models представляет собой встроенную библиотеку, в которой содержится общий для всех микросервисов код

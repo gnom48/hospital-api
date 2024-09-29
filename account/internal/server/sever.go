@@ -54,10 +54,6 @@ func (s *ApiServer) ConfigureLogger() error {
 	return nil
 }
 
-func (s *ApiServer) ConfigureRouter() {
-	s.router.HandleFunc("/hello", s.HandleHello())
-}
-
 func (s *ApiServer) ConfigureStore() error {
 	st := storage.New(s.config.StorageConfig)
 	if err := st.Open(); err != nil {
@@ -67,6 +63,10 @@ func (s *ApiServer) ConfigureStore() error {
 	s.storage = st
 
 	return nil
+}
+
+func (s *ApiServer) ConfigureRouter() {
+	s.router.HandleFunc("/hello", s.HandleHello())
 }
 
 func (s *ApiServer) HandleHello() http.HandlerFunc {
