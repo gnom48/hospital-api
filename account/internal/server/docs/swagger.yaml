@@ -1,0 +1,30 @@
+basePath: /
+host: localhost:8081
+info:
+  contact: {}
+  description: Account API documentation
+  title: Account
+  version: "1.0"
+paths:
+  /hello:
+    get:
+      consumes:
+      - application/json
+      description: Returns a greeting message
+      parameters:
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            type: string
+      summary: Hello endpoint
+schemes:
+- http
+swagger: "2.0"
