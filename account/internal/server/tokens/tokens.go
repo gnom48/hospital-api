@@ -18,12 +18,12 @@ type TokenSigner interface {
 type TokenSign struct{}
 
 type RegularClaims struct {
-	UserId int `json:"user_id"`
+	UserId string `json:"user_id"`
 	jwt.StandardClaims
 }
 
 type CreationClaims struct {
-	UserId   int    `json:"user_id"`
+	UserId   string `json:"user_id"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 	jwt.StandardClaims
@@ -37,7 +37,7 @@ func (t *TokenSign) GenerateRegularToken(user *models.User) (string, error) {
 			IssuedAt:  jwt.At(time.Now()),
 		},
 	})
-	tokenString, err := token.SignedString(SecretKey)
+	tokenString, err := token.SignedString([]byte(SecretKey))
 	if err != nil {
 		return "", err
 	}
@@ -54,7 +54,7 @@ func (t *TokenSign) GenerateCreationToken(user *models.User) (string, error) {
 			IssuedAt:  jwt.At(time.Now()),
 		},
 	})
-	tokenString, err := token.SignedString(SecretKey)
+	tokenString, err := token.SignedString([]byte(SecretKey))
 	if err != nil {
 		return "", err
 	}
@@ -66,7 +66,7 @@ func (t *TokenSign) ValidateCreationToken(tokenString string) (*CreationClaims, 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-		return SecretKey, nil
+		return []byte(SecretKey), nil
 	})
 
 	if err != nil {
@@ -88,7 +88,7 @@ func (t *TokenSign) ValidateRegularToken(tokenString string) (*RegularClaims, er
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
-			return SecretKey, nil
+			return []byte(SecretKey), nil
 		})
 
 	if err != nil {
@@ -96,6 +96,9 @@ func (t *TokenSign) ValidateRegularToken(tokenString string) (*RegularClaims, er
 	}
 
 	if claims, ok := token.Claims.(*RegularClaims); ok && token.Valid {
+		if claims.ExpiresAt.Unix() < time.Now().Unix() {
+			return nil, fmt.Errorf("Token has expired, refresh it")
+		}
 		return claims, nil
 	}
 

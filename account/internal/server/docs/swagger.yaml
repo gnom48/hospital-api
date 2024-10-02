@@ -1,4 +1,23 @@
 basePath: /
+definitions:
+  server.signInRequestBody:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  server.signUpRequestBody:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
 host: localhost:8081
 info:
   contact: {}
@@ -6,6 +25,94 @@ info:
   title: Account
   version: "1.0"
 paths:
+  /api/Authentication/Refresh:
+    get:
+      consumes:
+      - application/json
+      description: Refresh token pair by creation token
+      parameters:
+      - description: Authorization header (creation token)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Refresh
+      tags:
+      - Authentication
+  /api/Authentication/SignIn:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user based on their username and password and generates
+        tokens
+      parameters:
+      - description: User Credentials
+        in: body
+        name: requestBody
+        required: true
+        schema:
+          $ref: '#/definitions/server.signInRequestBody'
+      produces:
+      - application/json
+      responses: {}
+      summary: Sign in a user
+      tags:
+      - Authentication
+  /api/Authentication/SignOut:
+    head:
+      consumes:
+      - application/json
+      description: Delete token pair by creation token
+      parameters:
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: SignOut
+      tags:
+      - Authentication
+  /api/Authentication/SignUp:
+    post:
+      consumes:
+      - application/json
+      description: SignUp
+      parameters:
+      - description: User Credentials
+        in: body
+        name: requestBody
+        required: true
+        schema:
+          $ref: '#/definitions/server.signUpRequestBody'
+      produces:
+      - application/json
+      responses: {}
+      summary: SignUp
+      tags:
+      - Authentication
+  /api/Authentication/Validate:
+    get:
+      consumes:
+      - application/json
+      description: Validate
+      parameters:
+      - description: Authorization header
+        in: query
+        name: AccessToken
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Validate
+      tags:
+      - Authentication
   /hello:
     get:
       consumes:

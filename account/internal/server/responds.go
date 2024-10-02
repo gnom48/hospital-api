@@ -13,5 +13,6 @@ func (s *ApiServer) Respond(w http.ResponseWriter, r *http.Request, code int, da
 }
 
 func (s *ApiServer) ErrorRespond(w http.ResponseWriter, r *http.Request, code int, err error) {
-	s.Respond(w, r, code, map[string]string{"error": err.Error()})
+	s.logger.Error(err)
+	s.Respond(w, r, code, map[string]string{"Server error": err.Error()})
 }

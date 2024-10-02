@@ -111,7 +111,7 @@ func (s *ApiServer) internalServerErrorMiddleware(next http.Handler) http.Handle
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				s.ErrorRespond(w, r, http.StatusInternalServerError, fmt.Errorf("Error: %v", err))
+				s.ErrorRespond(w, r, http.StatusNotImplemented, fmt.Errorf("Error: %v", err))
 			}
 		}()
 		next.ServeHTTP(w, r)
@@ -127,7 +127,13 @@ func (s *ApiServer) internalServerErrorMiddleware(next http.Handler) http.Handle
 func (s *ApiServer) ConfigureRouter() {
 	s.router.Use(s.internalServerErrorMiddleware)
 	s.router.Use(s.loggingMiddleware)
-	s.router.HandleFunc("/hello", s.AuthMiddleware(s.HandleHello()))
+	s.router.HandleFunc("/hello", s.HandleHello())
+
+	s.router.HandleFunc("/api/Authentication/SignUp", s.HandleAuthenticationSignUp())
+	s.router.HandleFunc("/api/Authentication/SignIn", s.HandleAuthenticationSignIn())
+	s.router.HandleFunc("/api/Authentication/SignOut", s.AuthMiddleware(s.HandleAuthenticationSignOut()))
+	s.router.HandleFunc("/api/Authentication/Validate", s.HandleAuthenticationValidate())
+	s.router.HandleFunc("/api/Authentication/Refresh", s.HandleAuthenticationRefresh())
 
 	s.router.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 }
@@ -146,7 +152,7 @@ func (s *ApiServer) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		claims, err := s.tokenSigner.ValidateRegularToken(tokenString)
 		if err != nil {
-			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("Invalid token"))
+			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("Invalid token, refresh or sign in to get a new pair"))
 			return
 		}
 

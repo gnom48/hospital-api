@@ -8,16 +8,23 @@ import (
 	models "github.com/gnom48/hospital-api-lib"
 )
 
-func (s *ApiServer) HandleAuthenticationSignUp() http.HandlerFunc {
-	type RequestBody struct {
-		LastName  string `json:"last_name"`
-		FirstName string `json:"first_name"`
-		Username  string `json:"username"`
-		Password  string `json:"password"`
-	}
+type signUpRequestBody struct {
+	LastName  string `json:"last_name"`
+	FirstName string `json:"first_name"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+}
 
+// @Summary SignUp
+// @Description SignUp
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param requestBody body signUpRequestBody true "User Credentials"
+// @Router /api/Authentication/SignUp [post]
+func (s *ApiServer) HandleAuthenticationSignUp() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		requestBody := &RequestBody{}
+		requestBody := &signUpRequestBody{}
 		if err := json.NewDecoder(r.Body).Decode(requestBody); err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
 			return
@@ -32,26 +39,38 @@ func (s *ApiServer) HandleAuthenticationSignUp() http.HandlerFunc {
 		if returning, err := s.storage.Repository().AddUser(user); err != nil {
 			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, err)
 		} else {
-			s.Respond(w, r, http.StatusCreated, returning)
+			s.Respond(w, r, http.StatusCreated, returning.Id)
 		}
 	}
 }
 
-func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
-	type RequestBody struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
+type signInRequestBody struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
+type TokensPairResponseBody struct {
+	CreationToken string `json:"creation_token"`
+	RegularToken  string `json:"regular_token"`
+}
+
+// @Summary Sign in a user
+// @Description Authenticates a user based on their username and password and generates tokens
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param requestBody body signInRequestBody true "User Credentials"
+// @Router /api/Authentication/SignIn [post]
+func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		requestBody := &RequestBody{}
+		requestBody := &signInRequestBody{}
 		if err := json.NewDecoder(r.Body).Decode(requestBody); err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
 			return
 		}
 
-		if user, err := s.storage.Repository().GetUserByUsernamePassword(requestBody.Username, requestBody.Password); err != nil {
-			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, err)
+		if user, err := s.storage.Repository().GetUserByUsernamePassword(string(requestBody.Username), string(requestBody.Password)); err != nil {
+			s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
 		} else {
 			creationToken, cte := s.tokenSigner.GenerateCreationToken(user)
 			regularToken, rte := s.tokenSigner.GenerateRegularToken(user)
@@ -60,10 +79,7 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 				return
 			}
 
-			s.Respond(w, r, http.StatusCreated, struct {
-				CreationToken string `json:"creation_token"`
-				RegularToken  string `json:"regular_token"`
-			}{
+			s.Respond(w, r, http.StatusCreated, TokensPairResponseBody{
 				CreationToken: creationToken,
 				RegularToken:  regularToken,
 			})
@@ -71,20 +87,83 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 	}
 }
 
+// @Summary SignOut
+// @Description Delete token pair by creation token
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Router /api/Authentication/SignOut [head]
+// @Param Authorization header string true "Authorization header"
 func (s *ApiServer) HandleAuthenticationSignOut() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		user, ok := r.Context().Value(UserContextKey).(models.User)
+		if !ok {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
+		}
 
+		res, err := s.storage.Repository().DeleteTokensPair(user.Id)
+		if !res {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, err)
+		}
+		s.Respond(w, r, http.StatusOK, nil)
 	}
 }
 
+// @Summary Validate
+// @Description Validate
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Router /api/Authentication/Validate [get]
+// @Param AccessToken query string true "Authorization header"
 func (s *ApiServer) HandleAuthenticationValidate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		accessToken := params.Get("accessToken")
+		accessToken := params.Get("AccessToken")
 		if data, err := s.tokenSigner.ValidateRegularToken(accessToken); err != nil {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, err)
 		} else {
 			s.Respond(w, r, http.StatusOK, data)
 		}
+	}
+}
+
+// @Summary Refresh
+// @Description Refresh token pair by creation token
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Router /api/Authentication/Refresh [get]
+// @Param Authorization header string true "Authorization header (creation token)"
+func (s *ApiServer) HandleAuthenticationRefresh() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			http.Error(w, "Authorization header is empty", http.StatusUnauthorized)
+			return
+		}
+
+		claims, err := s.tokenSigner.ValidateCreationToken(tokenString)
+		if err != nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("Invalid token, sign in to get a new pair"))
+			return
+		}
+		user, err := s.storage.Repository().GetUserById(claims.UserId)
+		if err != nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
+			return
+		}
+
+		creationToken, cte := s.tokenSigner.GenerateCreationToken(user)
+		regularToken, rte := s.tokenSigner.GenerateRegularToken(user)
+		if cte != nil || rte != nil {
+			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Errors: %v", cte, rte))
+			return
+		}
+
+		s.Respond(w, r, http.StatusCreated, TokensPairResponseBody{
+			CreationToken: creationToken,
+			RegularToken:  regularToken,
+		})
 	}
 }
