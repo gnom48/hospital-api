@@ -60,8 +60,20 @@ func (r *Repository) GetUserById(userId string) (*models.User, error) {
 	return &user, nil
 }
 
+func (r *Repository) GetTokenById(id string) (*models.Token, error) {
+	token := models.Token{}
+
+	if err := r.storage.db.QueryRow(
+		"SELECT * FROM tokens WHERE id = $1",
+		id,
+	).Scan(&token.Id, &token.UserId, &token.Token, &token.IsRegular); err != nil {
+		return nil, err
+	}
+
+	return &token, nil
+}
+
 func (r *Repository) addToken(token *models.Token) (string, error) {
-	token.Id, _ = models.GenerateUuid32()
 	if err := r.storage.db.QueryRow(
 		"INSERT INTO tokens (id, token, user_id, is_regular) VALUES ($1, $2, $3, $4) RETURNING id",
 		token.Id, token.Token, token.UserId, token.IsRegular,
@@ -83,7 +95,7 @@ func (r *Repository) DeleteTokensPair(userId string) (bool, error) {
 	return true, nil
 }
 
-func (r *Repository) SyncToken(tokenString string, userId string, isRegular bool) (string, error) {
+func (r *Repository) SyncToken(tokenId string, userId string, isRegular bool) (string, error) {
 	if _, err := r.storage.db.Query(
 		"DELETE FROM tokens WHERE user_id = $1 AND is_regular = $2",
 		userId, isRegular,
@@ -91,12 +103,10 @@ func (r *Repository) SyncToken(tokenString string, userId string, isRegular bool
 		return "", err
 	}
 
-	id, _ := models.GenerateUuid32()
-
 	res, err := r.addToken(&models.Token{
-		Id:        id,
+		Id:        tokenId,
 		UserId:    userId,
-		Token:     tokenString,
+		Token:     "tokenString",
 		IsRegular: isRegular,
 	})
 	if err != nil {

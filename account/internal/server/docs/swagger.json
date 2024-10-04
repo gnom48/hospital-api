@@ -1,16 +1,8 @@
 {
-    "schemes": [
-        "http"
-    ],
     "swagger": "2.0",
     "info": {
-        "description": "Account API documentation",
-        "title": "Account",
-        "contact": {},
-        "version": "1.0"
+        "contact": {}
     },
-    "host": "localhost:8081",
-    "basePath": "/",
     "paths": {
         "/api/Authentication/Refresh": {
             "get": {

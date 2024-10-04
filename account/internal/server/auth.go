@@ -8,6 +8,8 @@ import (
 	models "github.com/gnom48/hospital-api-lib"
 )
 
+var tokenError = fmt.Errorf("Invalid token, refresh or sign in to get a new pair")
+
 type signUpRequestBody struct {
 	LastName  string `json:"last_name"`
 	FirstName string `json:"first_name"`
@@ -72,10 +74,19 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 		if user, err := s.storage.Repository().GetUserByUsernamePassword(string(requestBody.Username), string(requestBody.Password)); err != nil {
 			s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
 		} else {
-			creationToken, cte := s.tokenSigner.GenerateCreationToken(user)
-			regularToken, rte := s.tokenSigner.GenerateRegularToken(user)
+			creationToken, creationTokenId, cte := s.tokenSigner.GenerateCreationToken(user)
+			regularToken, regularTokenId, rte := s.tokenSigner.GenerateRegularToken(user)
 			if cte != nil || rte != nil {
 				s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Errors: %v", cte, rte))
+				return
+			}
+
+			if _, err = s.storage.Repository().SyncToken(creationTokenId, user.Id, false); err != nil {
+				s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
+				return
+			}
+			if _, err = s.storage.Repository().SyncToken(regularTokenId, user.Id, true); err != nil {
+				s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
 				return
 			}
 
@@ -105,12 +116,13 @@ func (s *ApiServer) HandleAuthenticationSignOut() http.HandlerFunc {
 		if !res {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, err)
 		}
+
 		s.Respond(w, r, http.StatusOK, nil)
 	}
 }
 
 // @Summary Validate
-// @Description Validate
+// @Description Validate regular token
 // @Tags Authentication
 // @Accept json
 // @Produce json
@@ -120,11 +132,19 @@ func (s *ApiServer) HandleAuthenticationValidate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 		accessToken := params.Get("AccessToken")
-		if data, err := s.tokenSigner.ValidateRegularToken(accessToken); err != nil {
-			s.ErrorRespond(w, r, http.StatusUnauthorized, err)
-		} else {
-			s.Respond(w, r, http.StatusOK, data)
+		data, e := s.tokenSigner.ValidateRegularToken(accessToken)
+		if e != nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, e)
+			return
 		}
+
+		if token, err := s.storage.Repository().GetTokenById(data.ID); err != nil || token == nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("Token revoked"))
+			return
+		}
+
+		s.Respond(w, r, http.StatusOK, data)
+
 	}
 }
 
@@ -137,27 +157,24 @@ func (s *ApiServer) HandleAuthenticationValidate() http.HandlerFunc {
 // @Param Authorization header string true "Authorization header (creation token)"
 func (s *ApiServer) HandleAuthenticationRefresh() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tokenString := r.Header.Get("Authorization")
-		if tokenString == "" {
-			http.Error(w, "Authorization header is empty", http.StatusUnauthorized)
-			return
-		}
-
-		claims, err := s.tokenSigner.ValidateCreationToken(tokenString)
-		if err != nil {
-			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("Invalid token, sign in to get a new pair"))
-			return
-		}
-		user, err := s.storage.Repository().GetUserById(claims.UserId)
-		if err != nil {
+		user, ok := r.Context().Value(UserContextKey).(models.User)
+		if !ok {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
-			return
 		}
 
-		creationToken, cte := s.tokenSigner.GenerateCreationToken(user)
-		regularToken, rte := s.tokenSigner.GenerateRegularToken(user)
+		creationToken, creationTokenId, cte := s.tokenSigner.GenerateCreationToken(&user)
+		regularToken, regularTokenId, rte := s.tokenSigner.GenerateRegularToken(&user)
 		if cte != nil || rte != nil {
 			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Errors: %v", cte, rte))
+			return
+		}
+
+		if _, err := s.storage.Repository().SyncToken(creationTokenId, user.Id, false); err != nil {
+			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
+			return
+		}
+		if _, err := s.storage.Repository().SyncToken(regularTokenId, user.Id, true); err != nil {
+			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
 			return
 		}
 

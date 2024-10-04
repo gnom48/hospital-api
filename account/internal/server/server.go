@@ -131,9 +131,9 @@ func (s *ApiServer) ConfigureRouter() {
 
 	s.router.HandleFunc("/api/Authentication/SignUp", s.HandleAuthenticationSignUp())
 	s.router.HandleFunc("/api/Authentication/SignIn", s.HandleAuthenticationSignIn())
-	s.router.HandleFunc("/api/Authentication/SignOut", s.AuthMiddleware(s.HandleAuthenticationSignOut()))
+	s.router.HandleFunc("/api/Authentication/SignOut", s.AuthCreationTokenMiddleware(s.HandleAuthenticationSignOut()))
 	s.router.HandleFunc("/api/Authentication/Validate", s.HandleAuthenticationValidate())
-	s.router.HandleFunc("/api/Authentication/Refresh", s.HandleAuthenticationRefresh())
+	s.router.HandleFunc("/api/Authentication/Refresh", s.AuthCreationTokenMiddleware(s.HandleAuthenticationRefresh()))
 
 	s.router.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 }
@@ -142,7 +142,7 @@ type StringContextKey string
 
 var UserContextKey StringContextKey = "user"
 
-func (s *ApiServer) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (s *ApiServer) AuthRegularTokenMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
@@ -152,13 +152,50 @@ func (s *ApiServer) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		claims, err := s.tokenSigner.ValidateRegularToken(tokenString)
 		if err != nil {
-			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("Invalid token, refresh or sign in to get a new pair"))
+			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+			return
+		}
+
+		if token, err := s.storage.Repository().GetTokenById(claims.ID); err != nil || token == nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
 			return
 		}
 
 		user, err := s.storage.Repository().GetUserById(claims.UserId)
 		if err != nil {
-			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("Invalid token"))
+			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), UserContextKey, *user)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+}
+
+func (s *ApiServer) AuthCreationTokenMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			http.Error(w, "Authorization header is empty", http.StatusUnauthorized)
+			return
+		}
+
+		claims, err := s.tokenSigner.ValidateCreationToken(tokenString)
+		if err != nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+			return
+		}
+
+		token, err := s.storage.Repository().GetTokenById(claims.ID)
+		if err != nil || token == nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+			return
+		}
+
+		user, err := s.storage.Repository().GetUserById(claims.UserId)
+		if err != nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
 			return
 		}
 
