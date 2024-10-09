@@ -38,7 +38,7 @@ func (t *TokenSign) GenerateRegularToken(user *models.User) (string, string, err
 		UserId: user.Id,
 		StandardClaims: jwt.StandardClaims{
 			ID:        tokenId,
-			ExpiresAt: jwt.At(time.Now().Add(24 * 7 * time.Hour)),
+			ExpiresAt: jwt.At(time.Now().Add(15 * time.Minute)),
 			IssuedAt:  jwt.At(time.Now()),
 			Subject:   regularTokenType,
 		},
@@ -58,7 +58,7 @@ func (t *TokenSign) GenerateCreationToken(user *models.User) (string, string, er
 		Password: user.Password,
 		StandardClaims: jwt.StandardClaims{
 			ID:        tokenId,
-			ExpiresAt: jwt.At(time.Now().Add(15 * time.Minute)),
+			ExpiresAt: jwt.At(time.Now().Add(24 * 7 * time.Hour)),
 			IssuedAt:  jwt.At(time.Now()),
 			Subject:   creationTokenType,
 		},

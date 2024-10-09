@@ -145,7 +145,7 @@ const docTemplate = `{
         },
         "/api/Accounts/{id}": {
             "put": {
-                "description": "Update a user account by ID",
+                "description": "Update a user account by Id",
                 "consumes": [
                     "application/json"
                 ],
@@ -155,11 +155,11 @@ const docTemplate = `{
                 "tags": [
                     "Accounts"
                 ],
-                "summary": "Update account by ID",
+                "summary": "Update account by Id",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "User ID",
+                        "type": "string",
+                        "description": "User Id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -190,6 +190,13 @@ const docTemplate = `{
                 ],
                 "summary": "Soft delete an account by ID",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Authorization header",
@@ -328,35 +335,6 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
-            }
-        },
-        "/hello": {
-            "get": {
-                "description": "Returns a greeting message",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Hello endpoint",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Authorization header",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
             }
         }
     },

@@ -106,3 +106,103 @@ func (r *Repository) SyncToken(tokenId string, userId string, isRegular bool) (s
 
 	return res, nil
 }
+
+func (r *Repository) UpdateUser(user *models.User) error {
+	if _, err := r.storage.db.Query(
+		"UPDATE users SET last_name = $1, first_name = $2, password = $3 WHERE id = $4",
+		user.LastName, user.FirstName, EncryptString(user.Password), user.Id,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) GetAllAccounts(from int, count int) ([]models.User, error) {
+	rows, err := r.storage.db.Query(
+		"SELECT * FROM users ORDER BY id OFFSET $1 ROWS FETCH NEXT $2 ROWS ONLY",
+		from, count,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var accounts []models.User
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(&user.Id, &user.LastName, &user.FirstName, &user.Username, &user.Password, &user.CreatedAt, &user.IsActive); err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
+}
+
+func (r *Repository) GetAllUserRoles(userId string) ([]models.Role, error) {
+	rows, err := r.storage.db.Query(
+		"SELECT * FROM roles WHERE id IN (SELECT role_id FROM user_roles WHERE user_id = $1)",
+		userId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var roles []models.Role
+	for rows.Next() {
+		var r models.Role
+		if err := rows.Scan(&r.Id, &r.Name); err != nil {
+			return nil, err
+		}
+		roles = append(roles, r)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return roles, nil
+}
+
+func (r *Repository) AddUserRole(userId string, roleName string) error {
+	if _, err := r.storage.db.Query(
+		"INSERT INTO user_roles (user_id, role_id) VALUES ($1, (SELECT id FROM roles WHERE name = $2 LIMIT 1));",
+		userId, roleName,
+	); err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
+func (r *Repository) DeleteAllUserRoles(userId string) (int, error) {
+	res, err := r.storage.db.Exec(
+		"DELETE FROM user_roles WHERE user_id = $1",
+		userId,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	returning, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(returning), nil
+}
+
+func (r *Repository) SoftDeleteUser(userId string) error {
+	if _, err := r.storage.db.Query(
+		"UPDATE users SET is_active = false WHERE id = $1;",
+		userId,
+	); err != nil {
+		return err
+	}
+	return nil
+}

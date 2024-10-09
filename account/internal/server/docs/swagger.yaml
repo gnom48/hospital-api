@@ -100,6 +100,11 @@ paths:
     delete:
       description: Soft delete a user account by ID
       parameters:
+      - description: User Id
+        in: path
+        name: id
+        required: true
+        type: string
       - description: Authorization header
         in: header
         name: Authorization
@@ -112,13 +117,13 @@ paths:
     put:
       consumes:
       - application/json
-      description: Update a user account by ID
+      description: Update a user account by Id
       parameters:
-      - description: User ID
+      - description: User Id
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - description: Account Details
         in: body
         name: requestBody
@@ -133,7 +138,7 @@ paths:
       produces:
       - application/json
       responses: {}
-      summary: Update account by ID
+      summary: Update account by Id
       tags:
       - Accounts
   /api/Accounts/Me:
@@ -264,25 +269,6 @@ paths:
       summary: Validate
       tags:
       - Authentication
-  /hello:
-    get:
-      consumes:
-      - application/json
-      description: Returns a greeting message
-      parameters:
-      - description: Authorization header
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successful response
-          schema:
-            type: string
-      summary: Hello endpoint
 schemes:
 - http
 swagger: "2.0"

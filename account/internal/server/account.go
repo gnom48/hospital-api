@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	models "github.com/gnom48/hospital-api-lib"
 )
@@ -67,50 +68,6 @@ func (s *ApiServer) HandleUpdateAccount() http.HandlerFunc {
 	}
 }
 
-type getAllAccountsResponseBody struct {
-	Accounts []models.User `json:"accounts"`
-}
-
-// @Summary Get all accounts
-// @Description Retrieve a list of all accounts
-// @Tags Accounts
-// @Accept json
-// @Produce json
-// @Param from query int false "Start index"
-// @Param count query int false "Number of records"
-// @Router /api/Accounts [get]
-// @Param Authorization header string true "Authorization header"
-func (s *ApiServer) HandleGetAllAccounts() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, ok := r.Context().Value(UserContextKey).(models.User)
-		if !ok {
-			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
-			return
-		}
-		roles, ok := r.Context().Value(RoleContextKey).([]models.Role)
-		if !ok {
-			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access forbidden"))
-			return
-		} else {
-			if IsUserInRole(roles, "0") {
-				s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access only for admin"))
-				return
-			}
-		}
-
-		from := r.URL.Query().Get("from")
-		count := r.URL.Query().Get("count")
-
-		accounts, err := s.storage.Repository().GetAllAccounts(from, count)
-		if err != nil {
-			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
-			return
-		}
-
-		s.Respond(w, r, http.StatusOK, getAllAccountsResponseBody{Accounts: accounts})
-	}
-}
-
 type createAccountRequestBody struct {
 	LastName  string   `json:"last_name"`
 	FirstName string   `json:"first_name"`
@@ -129,7 +86,7 @@ type createAccountRequestBody struct {
 // @Param Authorization header string true "Authorization header"
 func (s *ApiServer) HandleCreateAccount() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, ok := r.Context().Value(UserContextKey).(models.User)
+		_, ok := r.Context().Value(UserContextKey).(models.User)
 		if !ok {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
 			return
@@ -139,7 +96,7 @@ func (s *ApiServer) HandleCreateAccount() http.HandlerFunc {
 			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access forbidden"))
 			return
 		} else {
-			if IsUserInRole(roles, "0") {
+			if !IsUserInRole(roles, "0") {
 				s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access only for admin"))
 				return
 			}
@@ -163,9 +120,9 @@ func (s *ApiServer) HandleCreateAccount() http.HandlerFunc {
 			return
 		} else {
 			currentErrors := make([]string, 0)
-			for _, r := range requestBody.Roles {
-				if e := s.storage.Repository().AddUserRole(r); e != nil {
-					currentErrors = append(currentErrors, fmt.Errorf(e).Error())
+			for _, roleName := range requestBody.Roles {
+				if e := s.storage.Repository().AddUserRole(returning.Id, roleName); e != nil {
+					currentErrors = append(currentErrors, e.Error())
 				}
 			}
 			s.Respond(w, r, http.StatusCreated, struct {
@@ -179,12 +136,68 @@ func (s *ApiServer) HandleCreateAccount() http.HandlerFunc {
 	}
 }
 
-// @Summary Update account by ID
-// @Description Update a user account by ID
+type getAllAccountsResponseBody struct {
+	Accounts []models.User `json:"accounts"`
+}
+
+// @Summary Get all accounts
+// @Description Retrieve a list of all accounts
 // @Tags Accounts
 // @Accept json
 // @Produce json
-// @Param id path int true "User ID"
+// @Param from query int false "Start index"
+// @Param count query int false "Number of records"
+// @Router /api/Accounts [get]
+// @Param Authorization header string true "Authorization header"
+func (s *ApiServer) HandleGetAllAccounts() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		_, ok := r.Context().Value(UserContextKey).(models.User)
+		if !ok {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
+			return
+		}
+		roles, ok := r.Context().Value(RoleContextKey).([]models.Role)
+		if !ok {
+			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access forbidden"))
+			return
+		} else {
+			if !IsUserInRole(roles, "0") {
+				s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access only for admin"))
+				return
+			}
+		}
+
+		fromParam := r.URL.Query().Get("from")
+		countParam := r.URL.Query().Get("count")
+
+		from, err := strconv.Atoi(fromParam)
+		if err != nil {
+			http.Error(w, "Invalid 'from' parameter", http.StatusBadRequest)
+			return
+		}
+
+		count, err := strconv.Atoi(countParam)
+		if err != nil {
+			http.Error(w, "Invalid 'count' parameter", http.StatusBadRequest)
+			return
+		}
+
+		accounts, err := s.storage.Repository().GetAllAccounts(from, count)
+		if err != nil {
+			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.Respond(w, r, http.StatusOK, getAllAccountsResponseBody{Accounts: accounts})
+	}
+}
+
+// @Summary Update account by Id
+// @Description Update a user account by Id
+// @Tags Accounts
+// @Accept json
+// @Produce json
+// @Param id path string true "User Id"
 // @Param requestBody body createAccountRequestBody true "Account Details"
 // @Router /api/Accounts/{id} [put]
 // @Param Authorization header string true "Authorization header"
@@ -200,7 +213,7 @@ func (s *ApiServer) HandleUpdateAccountById() http.HandlerFunc {
 			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access forbidden"))
 			return
 		} else {
-			if IsUserInRole(roles, "0") {
+			if !IsUserInRole(roles, "0") {
 				s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access only for admin"))
 				return
 			}
@@ -225,13 +238,13 @@ func (s *ApiServer) HandleUpdateAccountById() http.HandlerFunc {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
 		} else {
 			currentErrors := make([]string, 0)
-			e := s.storage.Repository().DeleteAllUserRoles(editableUser.Id)
+			_, e := s.storage.Repository().DeleteAllUserRoles(editableUser.Id)
 			if e != nil {
-				currentErrors = append(currentErrors, e)
+				currentErrors = append(currentErrors, e.Error())
 			}
 			for _, r := range requestBody.Roles {
-				if e := s.storage.Repository().AddUserRole(r); e != nil {
-					currentErrors = append(currentErrors, fmt.Errorf(e).Error())
+				if e := s.storage.Repository().AddUserRole(id, r); e != nil {
+					currentErrors = append(currentErrors, e.Error())
 				}
 			}
 			s.Respond(w, r, http.StatusCreated, struct {
@@ -248,6 +261,7 @@ func (s *ApiServer) HandleUpdateAccountById() http.HandlerFunc {
 // @Summary Soft delete an account by ID
 // @Description Soft delete a user account by ID
 // @Tags Accounts
+// @Param id path string true "User Id"
 // @Router /api/Accounts/{id} [delete]
 // @Param Authorization header string true "Authorization header"
 func (s *ApiServer) HandleSoftDeleteAccountById() http.HandlerFunc {
@@ -262,7 +276,7 @@ func (s *ApiServer) HandleSoftDeleteAccountById() http.HandlerFunc {
 			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access forbidden"))
 			return
 		} else {
-			if IsUserInRole(roles, "0") {
+			if !IsUserInRole(roles, "0") {
 				s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access only for admin"))
 				return
 			}

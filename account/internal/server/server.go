@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -127,7 +126,6 @@ func (s *ApiServer) internalServerErrorMiddleware(next http.Handler) http.Handle
 func (s *ApiServer) ConfigureRouter() {
 	s.router.Use(s.internalServerErrorMiddleware)
 	s.router.Use(s.loggingMiddleware)
-	s.router.HandleFunc("/hello", s.HandleHello())
 
 	s.router.HandleFunc("/api/Authentication/SignUp", s.HandleAuthenticationSignUp()).Methods("POST")
 	s.router.HandleFunc("/api/Authentication/SignIn", s.HandleAuthenticationSignIn()).Methods("POST")
@@ -225,24 +223,11 @@ func (s *ApiServer) userRoleMiddleware(next http.Handler) http.HandlerFunc {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
 			return
 		}
-		if userRoles, err := s.storage.Repository().GetUserRoles(&user); err != nil {
+		if userRoles, err := s.storage.Repository().GetAllUserRoles(user.Id); err != nil {
 			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Role not found"))
 		} else {
 			ctx := context.WithValue(r.Context(), RoleContextKey, *&userRoles)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 	})
-}
-
-// @Summary Hello endpoint
-// @Description Returns a greeting message
-// @Accept json
-// @Produce json
-// @Success 200 {string} string "Successful response"
-// @Router /hello [get]
-// @Param Authorization header string true "Authorization header"
-func (s *ApiServer) HandleHello() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "Hello, "+r.Context().Value(UserContextKey).(models.User).Username+"!")
-	}
 }
