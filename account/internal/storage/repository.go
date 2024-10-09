@@ -1,9 +1,6 @@
 package storage
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
-
 	models "github.com/gnom48/hospital-api-lib"
 )
 
@@ -12,10 +9,7 @@ type Repository struct {
 }
 
 func (r *Repository) AddUser(user *models.User) (*models.User, error) {
-	encryptor := sha256.New()
-	encryptor.Write([]byte(user.Password))
-	hashed_password := encryptor.Sum(nil)
-	hashed_password_base64 := base64.StdEncoding.EncodeToString(hashed_password)
+	hashed_password_base64 := EncryptString(user.Password)
 	user.Password = hashed_password_base64
 	user.Id, _ = models.GenerateUuid32()
 
@@ -30,10 +24,7 @@ func (r *Repository) AddUser(user *models.User) (*models.User, error) {
 }
 
 func (r *Repository) GetUserByUsernamePassword(username string, password string) (*models.User, error) {
-	encryptor := sha256.New()
-	encryptor.Write([]byte(password))
-	hashed_password := encryptor.Sum(nil)
-	hashed_password_base64 := base64.StdEncoding.EncodeToString(hashed_password)
+	hashed_password_base64 := EncryptString(password)
 
 	user := models.User{}
 

@@ -129,11 +129,18 @@ func (s *ApiServer) ConfigureRouter() {
 	s.router.Use(s.loggingMiddleware)
 	s.router.HandleFunc("/hello", s.HandleHello())
 
-	s.router.HandleFunc("/api/Authentication/SignUp", s.HandleAuthenticationSignUp())
-	s.router.HandleFunc("/api/Authentication/SignIn", s.HandleAuthenticationSignIn())
-	s.router.HandleFunc("/api/Authentication/SignOut", s.AuthCreationTokenMiddleware(s.HandleAuthenticationSignOut()))
-	s.router.HandleFunc("/api/Authentication/Validate", s.HandleAuthenticationValidate())
-	s.router.HandleFunc("/api/Authentication/Refresh", s.AuthCreationTokenMiddleware(s.HandleAuthenticationRefresh()))
+	s.router.HandleFunc("/api/Authentication/SignUp", s.HandleAuthenticationSignUp()).Methods("POST")
+	s.router.HandleFunc("/api/Authentication/SignIn", s.HandleAuthenticationSignIn()).Methods("POST")
+	s.router.HandleFunc("/api/Authentication/SignOut", s.AuthCreationTokenMiddleware(s.HandleAuthenticationSignOut())).Methods("HEAD")
+	s.router.HandleFunc("/api/Authentication/Validate", s.HandleAuthenticationValidate()).Methods("GET")
+	s.router.HandleFunc("/api/Authentication/Refresh", s.AuthCreationTokenMiddleware(s.HandleAuthenticationRefresh())).Methods("GET")
+
+	s.router.HandleFunc("/api/Accounts/Me", s.AuthRegularTokenMiddleware(s.HandleGetCurrentAccount())).Methods("GET")
+	s.router.HandleFunc("/api/Accounts/Update", s.AuthRegularTokenMiddleware(s.HandleUpdateAccount())).Methods("PUT")
+	s.router.HandleFunc("/api/Accounts", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleGetAllAccounts()))).Methods("GET")
+	s.router.HandleFunc("/api/Accounts", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleCreateAccount()))).Methods("POST")
+	s.router.HandleFunc("/api/Accounts/{id}", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleUpdateAccountById()))).Methods("PUT")
+	s.router.HandleFunc("/api/Accounts/{id}", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleSoftDeleteAccountById()))).Methods("DELETE")
 
 	s.router.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 }
@@ -203,6 +210,28 @@ func (s *ApiServer) AuthCreationTokenMiddleware(next http.HandlerFunc) http.Hand
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
+}
+
+var RoleContextKey StringContextKey = "role"
+
+type userRolesResponseBody struct {
+	Roles []models.Role `json:"roles"`
+}
+
+func (s *ApiServer) userRoleMiddleware(next http.Handler) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, ok := r.Context().Value(UserContextKey).(models.User)
+		if !ok {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
+			return
+		}
+		if userRoles, err := s.storage.Repository().GetUserRoles(&user); err != nil {
+			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Role not found"))
+		} else {
+			ctx := context.WithValue(r.Context(), RoleContextKey, *&userRoles)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+	})
 }
 
 // @Summary Hello endpoint
