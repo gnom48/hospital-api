@@ -133,7 +133,7 @@ func (s *ApiServer) ConfigureRouter() {
 	s.router.HandleFunc("/api/Authentication/Validate", s.HandleAuthenticationValidate()).Methods("GET")
 	s.router.HandleFunc("/api/Authentication/Refresh", s.AuthCreationTokenMiddleware(s.HandleAuthenticationRefresh())).Methods("GET")
 
-	s.router.HandleFunc("/api/Accounts/Me", s.AuthRegularTokenMiddleware(s.HandleGetCurrentAccount())).Methods("GET")
+	s.router.HandleFunc("/api/Accounts/Me", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleGetCurrentAccount()))).Methods("GET")
 	s.router.HandleFunc("/api/Accounts/Update", s.AuthRegularTokenMiddleware(s.HandleUpdateAccount())).Methods("PUT")
 	s.router.HandleFunc("/api/Accounts", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleGetAllAccounts()))).Methods("GET")
 	s.router.HandleFunc("/api/Accounts", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleCreateAccount()))).Methods("POST")

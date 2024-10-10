@@ -9,6 +9,11 @@ import (
 	models "github.com/gnom48/hospital-api-lib"
 )
 
+type aboutMeResponseBody struct {
+	User  models.User   `json:"user"`
+	Roles []models.Role `json:"roles"`
+}
+
 // @Summary Get current account
 // @Description Retrieve the current account's data
 // @Tags Accounts
@@ -23,8 +28,21 @@ func (s *ApiServer) HandleGetCurrentAccount() http.HandlerFunc {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
 			return
 		}
+		roles, ok := r.Context().Value(RoleContextKey).([]models.Role)
+		if !ok {
+			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access forbidden"))
+			return
+		} else {
+			if !IsUserInRole(roles, "0") {
+				s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access only for admin"))
+				return
+			}
+		}
 
-		s.Respond(w, r, http.StatusOK, user)
+		s.Respond(w, r, http.StatusOK, aboutMeResponseBody{
+			User:  user,
+			Roles: roles,
+		})
 	}
 }
 
