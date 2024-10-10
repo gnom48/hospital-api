@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"strconv"
+
 	models "github.com/gnom48/hospital-api-lib"
 )
 
@@ -205,4 +207,42 @@ func (r *Repository) SoftDeleteUser(userId string) error {
 		return err
 	}
 	return nil
+}
+
+func (r *Repository) GetDoctorById(doctorId string) (models.Doctor, error) {
+	var doctor models.Doctor
+	err := r.storage.db.QueryRow(
+		"SELECT id, user_id, specialization FROM doctors WHERE id = $1",
+		doctorId).Scan(&doctor.Id, &doctor.UserId, &doctor.Specialization)
+	if err != nil {
+		return models.Doctor{}, err
+	}
+	return doctor, nil
+}
+
+func (r *Repository) GetDoctors(nameFilter string, fromStr string, countStr string) ([]models.Doctor, error) {
+	from, _ := strconv.Atoi(fromStr)
+	count, _ := strconv.Atoi(countStr)
+
+	rows, err := r.storage.db.Query(`
+		SELECT id, user_id, specialization 
+		FROM doctors 
+		WHERE user_id IN (SELECT id FROM users WHERE CONCAT(first_name, ' ', last_name) ILIKE $1) 
+		ORDER BY id 
+		LIMIT $2 OFFSET $3`,
+		"%"+nameFilter+"%", count, from)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	doctors := make([]models.Doctor, 0)
+	for rows.Next() {
+		var doctor models.Doctor
+		if err := rows.Scan(&doctor.Id, &doctor.UserId, &doctor.Specialization); err != nil {
+			return nil, err
+		}
+		doctors = append(doctors, doctor)
+	}
+	return doctors, nil
 }

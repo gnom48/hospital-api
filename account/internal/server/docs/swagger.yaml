@@ -269,6 +269,57 @@ paths:
       summary: Validate
       tags:
       - Authentication
+  /api/Doctors:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of doctors with optional name filtering
+      parameters:
+      - description: Filter by doctor's full name
+        in: query
+        name: nameFilter
+        type: string
+      - description: Pagination start
+        in: query
+        name: from
+        type: integer
+      - description: Number of records per page
+        in: query
+        name: count
+        type: integer
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get list of doctors
+      tags:
+      - Doctors
+  /api/Doctors/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve doctor information by doctor ID
+      parameters:
+      - description: Doctor ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get doctor information by ID
+      tags:
+      - Doctors
 schemes:
 - http
 swagger: "2.0"

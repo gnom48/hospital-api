@@ -336,6 +336,81 @@ const docTemplate = `{
                 ],
                 "responses": {}
             }
+        },
+        "/api/Doctors": {
+            "get": {
+                "description": "Retrieve a list of doctors with optional name filtering",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Doctors"
+                ],
+                "summary": "Get list of doctors",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by doctor's full name",
+                        "name": "nameFilter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Pagination start",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of records per page",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization header",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/Doctors/{id}": {
+            "get": {
+                "description": "Retrieve doctor information by doctor ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Doctors"
+                ],
+                "summary": "Get doctor information by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Doctor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization header",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
         }
     },
     "definitions": {

@@ -77,7 +77,7 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 			creationToken, creationTokenId, cte := s.tokenSigner.GenerateCreationToken(user)
 			regularToken, regularTokenId, rte := s.tokenSigner.GenerateRegularToken(user)
 			if cte != nil || rte != nil {
-				s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Errors: %v", cte, rte))
+				s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Errors: "+cte.Error()+"; "+rte.Error()))
 				return
 			}
 
