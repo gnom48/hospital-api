@@ -10,6 +10,6 @@ COPY . ./
 
 RUN go build -o /hospital-service ./cmd
 
-EXPOSE 8082
+EXPOSE 8081
 
 CMD ["./hospital-service"]

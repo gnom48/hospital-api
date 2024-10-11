@@ -8,8 +8,8 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -o /auth-service ./cmd
+RUN go build -o /account-service ./cmd
 
 EXPOSE 8081
 
-CMD ["./auth-service"]
+CMD ["./account-service"]

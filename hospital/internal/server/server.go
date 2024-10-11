@@ -145,7 +145,7 @@ func (s *ApiServer) AuthByTokenMiddleware(next http.HandlerFunc) http.HandlerFun
 			return
 		}
 
-		url := "http://localhost:8081/api/Accounts/Me"
+		url := "http://account-service:8081/api/Accounts/Me"
 		client := &http.Client{}
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
