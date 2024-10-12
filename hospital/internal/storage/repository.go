@@ -1,6 +1,10 @@
 package storage
 
 import (
+	"errors"
+	"fmt"
+	"strings"
+
 	models "github.com/gnom48/hospital-api-lib"
 )
 
@@ -77,12 +81,21 @@ func (r *Repository) AddHospital(name string, address string, contactNAme string
 		hospital.Id, hospital.Name, hospital.Address, hospital.ContactPhone,
 	)
 
+	var roomsErrors []string
 	for _, roomName := range rooms {
 		room := models.Room{
-			HospitalId: roomName,
+			HospitalId: hospital.Id,
+			Name:       roomName,
 		}
 		room.Id, _ = models.GenerateUuid32()
-		r.addRoom(room)
+		if _, e := r.addRoom(room); e != nil {
+			roomsErrors = append(roomsErrors, e.Error())
+		}
+	}
+	if len(roomsErrors) == 0 {
+		err = nil
+	} else {
+		err = errors.New(strings.Join(roomsErrors, "; "))
 	}
 
 	return hospital.Id, err
@@ -99,24 +112,44 @@ func (r *Repository) addRoom(room models.Room) (string, error) {
 
 func (r *Repository) UpdateHospital(hospital models.Hospital, rooms []string) error {
 	_, err := r.storage.db.Exec(
-		"UPDATE hospitals SET name = $1, address = $2, contact_phone = $3, WHERE id = $4;",
+		"UPDATE hospitals SET name = $1, address = $2, contact_phone = $3 WHERE id = $4;",
 		hospital.Name, hospital.Address, hospital.ContactPhone, hospital.Id,
 	)
 
+	var roomsErrors []string
 	for _, roomName := range rooms {
 		room := models.Room{
-			HospitalId: roomName,
+			HospitalId: hospital.Id,
+			Name:       roomName,
 		}
 		room.Id, _ = models.GenerateUuid32()
-		r.addRoom(room)
+		if _, e := r.addRoom(room); e != nil {
+			roomsErrors = append(roomsErrors, e.Error())
+		}
+	}
+	if len(roomsErrors) == 0 {
+		err = nil
+	} else {
+		err = errors.New(strings.Join(roomsErrors, "; "))
 	}
 
 	return err
 }
 
 func (r *Repository) DeleteHospital(id string) error {
-	_, err := r.storage.db.Exec(
-		"UPDATE hospitals SET is_active = false WHERE id = $1;",
+	isActive := true
+	err := r.storage.db.QueryRow(
+		"SELECT is_active FROM hospitals WHERE id = $1",
+		id,
+	).Scan(&isActive)
+	if err != nil {
+		return err
+	}
+	if !isActive {
+		return fmt.Errorf("Hospital already had been deleted")
+	}
+	_, err = r.storage.db.Exec(
+		"UPDATE hospitals SET is_active = false WHERE id = $1",
 		id,
 	)
 	return err

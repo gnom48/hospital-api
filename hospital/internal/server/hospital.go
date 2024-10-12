@@ -146,13 +146,13 @@ func (s *ApiServer) HandleCreateHospital() http.HandlerFunc {
 			return
 		}
 
-		_, err := s.storage.Repository().AddHospital(hospitalInfo.Name, hospitalInfo.Address, hospitalInfo.ContactPhone, hospitalInfo.Rooms)
+		returning, err := s.storage.Repository().AddHospital(hospitalInfo.Name, hospitalInfo.Address, hospitalInfo.ContactPhone, hospitalInfo.Rooms)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		s.Respond(w, r, http.StatusCreated, hospitalInfo)
+		s.Respond(w, r, http.StatusCreated, returning)
 	}
 }
 

@@ -1,15 +1,17 @@
-FROM golang:1.18
+FROM golang:1.23-alpine
 
-WORKDIR /app
+WORKDIR /hospital
 
-COPY go.mod ./
-COPY go.sum ./
+COPY ./go.mod ./
+COPY ./go.sum ./
 RUN go mod download
 
-COPY . ./
+COPY ./cmd ./cmd
+COPY ./internal ./internal
+COPY ./config ./config
 
-RUN go build -o /hospital-service ./cmd
+RUN go build -o ./hospital-service ./cmd/hospital
 
 EXPOSE 8081
 
-CMD ["./hospital-service"]
+CMD ["sh", "-c", "sleep 5; while [ ! -f ./hospital-service ]; do sleep 1; done; ./hospital-service"]

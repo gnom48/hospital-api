@@ -118,12 +118,19 @@ func (s *ApiServer) internalServerErrorMiddleware(next http.Handler) http.Handle
 // @title Account
 // @version 1.0
 // @description Account API documentation
-// @host localhost:8081
+// @host localhost:8082
 // @BasePath /
 // @schemes http
 func (s *ApiServer) ConfigureRouter() {
 	s.router.Use(s.internalServerErrorMiddleware)
 	s.router.Use(s.loggingMiddleware)
+
+	s.router.PathPrefix("/api/Hospitals/{id}/Rooms").Handler(s.AuthByTokenMiddleware(s.HandleGetRoomsByHospitalId())).Methods("GET")
+	s.router.PathPrefix("/api/Hospitals/{id}").Handler(s.AuthByTokenMiddleware(s.HandleGetHospitalById())).Methods("GET")
+	s.router.PathPrefix("/api/Hospitals/{id}").Handler(s.AuthByTokenMiddleware(s.HandleUpdateHospital())).Methods("PUT")
+	s.router.PathPrefix("/api/Hospitals/{id}").Handler(s.AuthByTokenMiddleware(s.HandleSoftDeleteHospital())).Methods("DELETE")
+	s.router.PathPrefix("/api/Hospitals").Handler(s.AuthByTokenMiddleware(s.HandleGetHospitals())).Methods("GET")
+	s.router.PathPrefix("/api/Hospitals").Handler(s.AuthByTokenMiddleware(s.HandleCreateHospital())).Methods("POST")
 
 	s.router.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 }
@@ -133,6 +140,7 @@ type StringContextKey string
 var UserContextKey StringContextKey = "user_role"
 
 type InfoAboutMeResponseBody struct {
+	Token string        `json:"token"`
 	User  models.User   `json:"user"`
 	Roles []models.Role `json:"roles"`
 }
@@ -168,17 +176,24 @@ func (s *ApiServer) AuthByTokenMiddleware(next http.HandlerFunc) http.HandlerFun
 			return
 		}
 
-		if resp.StatusCode == http.StatusOK {
-			var aboutMeResponse InfoAboutMeResponseBody
-			if err := json.Unmarshal(body, &aboutMeResponse); err != nil {
-				s.ErrorRespond(w, r, http.StatusInternalServerError, err)
-				return
-			}
-			ctx := context.WithValue(r.Context(), UserContextKey, aboutMeResponse)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		} else {
-			s.Respond(w, r, http.StatusUnauthorized, body)
+		var responseMap map[string]interface{}
+		if err := json.Unmarshal(body, &responseMap); err != nil {
+			s.ErrorRespond(w, r, http.StatusInternalServerError, fmt.Errorf("Authorization failed: invalid token"))
 			return
 		}
+		if _, exists := responseMap["server_error"]; exists {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf(responseMap["server_error"].(string)))
+			return
+		}
+
+		var aboutMeResponse InfoAboutMeResponseBody
+		if err := json.Unmarshal(body, &aboutMeResponse); err != nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, err)
+			return
+		}
+
+		aboutMeResponse.Token = tokenString
+		ctx := context.WithValue(r.Context(), UserContextKey, aboutMeResponse)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

@@ -14,7 +14,7 @@ go run cmd/account/main.go
 
 Сборка документации
 cd internal/server
-swag init -g server.go account.go auth.go doctor.go
+swag init -g server.go hospital.go
 */
 
 var configPath string

@@ -1,15 +1,17 @@
-FROM golang:1.18
+FROM golang:1.23-alpine
 
-WORKDIR /app
+WORKDIR /account
 
-COPY go.mod ./
-COPY go.sum ./
+COPY ./go.mod ./
+COPY ./go.sum ./
 RUN go mod download
 
-COPY . ./
+COPY ./cmd ./cmd
+COPY ./internal ./internal
+COPY ./config ./config
 
-RUN go build -o /account-service ./cmd
+RUN go build -o ./account-service ./cmd/account
 
 EXPOSE 8081
 
-CMD ["./account-service"]
+CMD ["sh", "-c", "sleep 5; while [ ! -f ./account-service ]; do sleep 1; done; ./account-service"]

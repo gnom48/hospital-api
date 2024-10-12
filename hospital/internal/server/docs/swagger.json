@@ -9,7 +9,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8081",
+    "host": "localhost:8082",
     "basePath": "/",
     "paths": {
         "/api/Hospitals": {

@@ -29,36 +29,16 @@ services:
     networks:
       - network
 
-  # document:
-  #   build: ./account
-  #   ports:
-  #     - "8084:8084" 
-  #   volumes:
-  #     - shared-data:/shared
-  #   restart: always
-  #   networks:
-  #     - network
-
   hospital:
     container_name: hospital-service
-    build: ./account
+    build: ./hospital
     ports:
-      - "8082:8081"  
+      - "8082:8081"
     volumes:
       - shared-data:/shared
     restart: always
     networks:
       - network
-
-  # timetable:
-  #   build: ./account
-  #   ports:
-  #     - "8083:8083"
-  #   volumes:
-  #     - shared-data:/shared
-  #   restart: always
-  #   networks:
-  #     - network
 
 volumes:
   postgres-data:
