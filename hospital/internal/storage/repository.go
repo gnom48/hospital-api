@@ -60,7 +60,7 @@ func (r *Repository) GetRoomsByHospitalId(id string) ([]models.Room, error) {
 	rooms := make([]models.Room, 0)
 	for rows.Next() {
 		var room models.Room
-		if err := rows.Scan(&room.Id, &room.HospitalId, &room.HospitalId); err != nil {
+		if err := rows.Scan(&room.Id, &room.HospitalId, &room.Name); err != nil {
 			return nil, err
 		}
 		rooms = append(rooms, room)

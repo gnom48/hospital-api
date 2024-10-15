@@ -1,0 +1,274 @@
+basePath: /
+definitions:
+  server.createAppointmentRequestBody:
+    properties:
+      time:
+        type: string
+    type: object
+  server.timetableInfoRequestBody:
+    properties:
+      doctorId:
+        type: string
+      from:
+        type: string
+      hospitalId:
+        type: string
+      room:
+        type: string
+      to:
+        type: string
+    type: object
+host: localhost:8083
+info:
+  contact: {}
+  description: Account API documentation
+  title: Account
+  version: "1.0"
+paths:
+  /api/Appointment/{id}:
+    delete:
+      description: Cancel a previously made appointment
+      parameters:
+      - description: Appointment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Cancel an appointment
+      tags:
+      - Appointment
+  /api/Timetable:
+    post:
+      consumes:
+      - application/json
+      description: Create a new entry in the timetable
+      parameters:
+      - description: Timetable object
+        in: body
+        name: timetable
+        required: true
+        schema:
+          $ref: '#/definitions/server.timetableInfoRequestBody'
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Create a new timetable entry
+      tags:
+      - Timetable
+  /api/Timetable/{id}:
+    delete:
+      description: Delete an existing entry in the timetable
+      parameters:
+      - description: Timetable ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Delete a timetable entry
+      tags:
+      - Timetable
+    put:
+      consumes:
+      - application/json
+      description: Update an existing entry in the timetable
+      parameters:
+      - description: Timetable ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Timetable object
+        in: body
+        name: timetable
+        required: true
+        schema:
+          $ref: '#/definitions/server.timetableInfoRequestBody'
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Update a timetable entry
+      tags:
+      - Timetable
+  /api/Timetable/{id}/Appointments:
+    get:
+      description: Retrieve available appointment slots based on the timetable entry
+      parameters:
+      - description: Timetable ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Get available appointments for a given timetable entry
+      tags:
+      - Timetable
+    post:
+      description: Make an appointment for a specific slot
+      parameters:
+      - description: Timetable ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Appointment request
+        in: body
+        name: appointment
+        required: true
+        schema:
+          $ref: '#/definitions/server.createAppointmentRequestBody'
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Book an appointment
+      tags:
+      - Timetable
+  /api/Timetable/Doctor/{id}:
+    delete:
+      description: Delete all entries in the timetable for a specific doctor
+      parameters:
+      - description: Doctor ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Delete all timetable entries for a doctor
+      tags:
+      - Timetable
+    get:
+      description: Retrieve the timetable for a specific doctor
+      parameters:
+      - description: Doctor ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: From date (ISO8601)
+        in: query
+        name: from
+        type: string
+      - description: To date (ISO8601)
+        in: query
+        name: to
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Get doctor's timetable by ID
+      tags:
+      - Timetable
+  /api/Timetable/Hospital/{id}:
+    delete:
+      description: Delete all entries in the timetable for a specific hospital
+      parameters:
+      - description: Hospital ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Delete all timetable entries for a hospital
+      tags:
+      - Timetable
+    get:
+      description: Retrieve the timetable for a specific hospital
+      parameters:
+      - description: Hospital ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: From date (ISO8601)
+        in: query
+        name: from
+        type: string
+      - description: To date (ISO8601)
+        in: query
+        name: to
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Get hospital timetable by ID
+      tags:
+      - Timetable
+  /api/Timetable/Hospital/{id}/Room/{room}:
+    get:
+      description: Retrieve the timetable for a specific room in a hospital
+      parameters:
+      - description: Hospital ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Room Name
+        in: path
+        name: room
+        required: true
+        type: string
+      - description: From date (ISO8601)
+        in: query
+        name: from
+        type: string
+      - description: To date (ISO8601)
+        in: query
+        name: to
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Get hospital room timetable
+      tags:
+      - Timetable
+schemes:
+- http
+swagger: "2.0"

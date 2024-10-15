@@ -1,8 +1,6 @@
 module account
 
-go 1.21.1
-
-toolchain go1.23.2
+go 1.23.2
 
 require (
 	github.com/BurntSushi/toml v1.4.0
