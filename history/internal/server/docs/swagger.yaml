@@ -1,0 +1,164 @@
+basePath: /
+definitions:
+  server.createUpdateHospitalRequestBody:
+    properties:
+      address:
+        type: string
+      contact_phone:
+        type: string
+      name:
+        type: string
+      rooms:
+        items:
+          type: string
+        type: array
+    type: object
+host: localhost:8082
+info:
+  contact: {}
+  description: Account API documentation
+  title: Account
+  version: "1.0"
+paths:
+  /api/Hospitals:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of hospitals
+      parameters:
+      - description: Pagination start
+        in: query
+        name: from
+        type: integer
+      - description: Number of records per page
+        in: query
+        name: count
+        type: integer
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get list of hospitals
+      tags:
+      - Hospitals
+    post:
+      consumes:
+      - application/json
+      description: Create a new hospital record
+      parameters:
+      - description: Hospital object
+        in: body
+        name: hospital
+        required: true
+        schema:
+          $ref: '#/definitions/server.createUpdateHospitalRequestBody'
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Create a new hospital
+      tags:
+      - Hospitals
+  /api/Hospitals/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a hospital by ID
+      parameters:
+      - description: Hospital ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Soft delete a hospital record
+      tags:
+      - Hospitals
+    get:
+      consumes:
+      - application/json
+      description: Retrieve hospital information by hospital ID
+      parameters:
+      - description: Hospital ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get hospital information by ID
+      tags:
+      - Hospitals
+    put:
+      consumes:
+      - application/json
+      description: Update hospital information
+      parameters:
+      - description: Hospital ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Hospital object
+        in: body
+        name: hospital
+        required: true
+        schema:
+          $ref: '#/definitions/server.createUpdateHospitalRequestBody'
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Update hospital information by ID
+      tags:
+      - Hospitals
+  /api/Hospitals/{id}/Rooms:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of rooms in a hospital by hospital ID
+      parameters:
+      - description: Hospital ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Authorization header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get rooms by hospital ID
+      tags:
+      - Hospitals
+schemes:
+- http
+swagger: "2.0"
