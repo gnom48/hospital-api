@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	models "github.com/gnom48/hospital-api-lib"
@@ -229,12 +230,12 @@ func (s *ApiServer) HandleGetTimetableByHospitalId() http.HandlerFunc {
 
 		fromStr := r.URL.Query().Get("from")
 		toStr := r.URL.Query().Get("to")
-		from, err := time.Parse(fromStr, time.RFC3339)
+		from, err := time.Parse(time.RFC3339, fromStr)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
 			return
 		}
-		to, err := time.Parse(toStr, time.RFC3339)
+		to, err := time.Parse(time.RFC3339, toStr)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
 			return
@@ -270,12 +271,12 @@ func (s *ApiServer) HandleGetTimetableByDoctorId() http.HandlerFunc {
 
 		fromStr := r.URL.Query().Get("from")
 		toStr := r.URL.Query().Get("to")
-		from, err := time.Parse(fromStr, time.RFC3339)
+		from, err := time.Parse(time.RFC3339, fromStr)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
 			return
 		}
-		to, err := time.Parse(toStr, time.RFC3339)
+		to, err := time.Parse(time.RFC3339, toStr)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
 			return
@@ -295,7 +296,7 @@ func (s *ApiServer) HandleGetTimetableByDoctorId() http.HandlerFunc {
 // @Description Retrieve the timetable for a specific room in a hospital
 // @Tags Timetable
 // @Param id path string true "Hospital ID"
-// @Param room path string true "Room Name"
+// @Param room path string true "Room ID"
 // @Param from query string false "From date (ISO8601)"
 // @Param to query string false "To date (ISO8601)"
 // @Router /api/Timetable/Hospital/{id}/Room/{room} [get]
@@ -308,28 +309,34 @@ func (s *ApiServer) HandleGetTimetableByRoom() http.HandlerFunc {
 			return
 		}
 
-		// hospitalId := r.URL.Path[len("/api/Timetable/Hospital/") : len(r.URL.Path)-len("/Room/")-1]
-		room := r.URL.Path[len(r.URL.Path)-len("/Room/"):]
+		room := ""
+		lastSlashIndex := strings.LastIndex(r.URL.Path, "/Room/") + len("/Room")
+		if lastSlashIndex != -1 && lastSlashIndex < len(r.URL.Path)-1 {
+			room = r.URL.Path[lastSlashIndex+1:]
+		} else {
+			s.ErrorRespond(w, r, http.StatusBadRequest, fmt.Errorf("Room Id not fount in request"))
+			return
+		}
 
 		fromStr := r.URL.Query().Get("from")
 		toStr := r.URL.Query().Get("to")
-		from, err := time.Parse(fromStr, time.RFC3339)
+		from, err := time.Parse(time.RFC3339, fromStr)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
 			return
 		}
-		to, err := time.Parse(toStr, time.RFC3339)
+		to, err := time.Parse(time.RFC3339, toStr)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
 			return
 		}
 
-		timetable, err := s.storage.Repository().GetTimetableByHospitalRoom(room, from, to)
+		timetables, err := s.storage.Repository().GetTimetableByHospitalRoom(room, from, to)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		s.Respond(w, r, http.StatusOK, timetable)
+		s.Respond(w, r, http.StatusOK, timetables)
 	}
 }

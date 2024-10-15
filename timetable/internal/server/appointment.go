@@ -23,7 +23,7 @@ func (s *ApiServer) HandleGetAvailableAppointments() http.HandlerFunc {
 			return
 		}
 
-		timetableId := r.URL.Path[len("/api/Timetable/"):]
+		timetableId := r.URL.Path[len("/api/Timetable/") : len(r.URL.Path)-len("/Appointments")]
 
 		appointments, err := s.storage.Repository().GetAvailableAppointments(timetableId)
 		if err != nil {
@@ -54,7 +54,7 @@ func (s *ApiServer) HandleBookAppointment() http.HandlerFunc {
 			return
 		}
 
-		timetableId := r.URL.Path[len("/api/Timetable/"):]
+		timetableId := r.URL.Path[len("/api/Timetable/") : len(r.URL.Path)-len("/Appointments")]
 
 		var appointmentInfo createAppointmentRequestBody
 		if err := json.NewDecoder(r.Body).Decode(&appointmentInfo); err != nil {

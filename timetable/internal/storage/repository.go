@@ -122,17 +122,6 @@ func (r *Repository) GetTimetableByDoctorId(doctorId string, from time.Time, to 
 	return timetables, nil
 }
 
-func (r *Repository) GetTimetableById(id string) (models.Timetable, error) {
-	var timetable models.Timetable
-	if err := r.storage.db.QueryRow(
-		"SELECT id, hospital_id, doctor_id, time_from, time_to, room FROM timetable WHERE id = $1",
-		id,
-	).Scan(&timetable); err != nil {
-		return models.Timetable{}, err
-	}
-	return timetable, nil
-}
-
 func (r *Repository) GetTimetableByHospitalRoom(roomId string, from time.Time, to time.Time) ([]models.Timetable, error) {
 	var timetables []models.Timetable
 	rows, err := r.storage.db.Query(
@@ -155,6 +144,17 @@ func (r *Repository) GetTimetableByHospitalRoom(roomId string, from time.Time, t
 	return timetables, nil
 }
 
+func (r *Repository) GetTimetableById(id string) (models.Timetable, error) {
+	var timetable models.Timetable
+	if err := r.storage.db.QueryRow(
+		"SELECT id, hospital_id, doctor_id, time_from, time_to, room FROM timetable WHERE id = $1",
+		id,
+	).Scan(&timetable.Id, &timetable.HospitalId, &timetable.DoctorId, &timetable.TimeFrom, &timetable.TimeTo, &timetable.Room); err != nil {
+		return models.Timetable{}, fmt.Errorf("Error: %w for id = "+id, err)
+	}
+	return timetable, nil
+}
+
 func (r *Repository) GetAvailableAppointments(timetableId string) ([]time.Time, error) {
 	var availableSlots []time.Time
 
@@ -169,8 +169,8 @@ func (r *Repository) GetAvailableAppointments(timetableId string) ([]time.Time, 
 
 	var bookedAppointments []models.Appointment
 	rows, err := r.storage.db.Query(
-		"SELECT id, timetable_id, user_id, appointment_time FROM appointments WHERE timetable_id = $1 LIMIT 1",
-		timetable.Id,
+		"SELECT id, timetable_id, user_id, appointment_time FROM appointments WHERE timetable_id = $1",
+		timetableId,
 	)
 	if err != nil {
 		return nil, err
@@ -190,7 +190,7 @@ func (r *Repository) GetAvailableAppointments(timetableId string) ([]time.Time, 
 	for _, availableSlot := range availableSlots {
 		found := false
 		for _, bookedAppointment := range bookedAppointments {
-			if availableSlot == bookedAppointment.AppointmentTime {
+			if availableSlot.Equal(bookedAppointment.AppointmentTime) {
 				found = true
 				break
 			}
@@ -213,7 +213,7 @@ func (r *Repository) BookAppointment(appointment models.Appointment) (string, er
 
 	availableAppointments, err := r.GetAvailableAppointments(timetable.Id)
 	for _, appointmentTime := range availableAppointments {
-		if appointmentTime == appointment.AppointmentTime {
+		if appointmentTime.Equal(appointment.AppointmentTime) {
 			isValid = true
 			break
 		}
@@ -228,6 +228,10 @@ func (r *Repository) BookAppointment(appointment models.Appointment) (string, er
 		appointment.Id, appointment.TimetableId, appointment.UserId, appointment.AppointmentTime,
 	)
 	if err != nil {
+		// FIXME: желательно сделать настоящую проверку
+		if err.Error() == "pq: duplicate key value violates unique constraint \"appointments_timetable_id_appointment_time_key\"" {
+			return "", fmt.Errorf("Appointment already had been booked")
+		}
 		return "", err
 	} else {
 		return appointment.Id, nil
