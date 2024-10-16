@@ -30,13 +30,8 @@ func (s *ApiServer) HandleGetCurrentAccount() http.HandlerFunc {
 		}
 		roles, ok := r.Context().Value(RoleContextKey).([]models.Role)
 		if !ok {
-			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access forbidden"))
+			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access denied"))
 			return
-		} else {
-			if !IsUserInRole(roles, "0") {
-				s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Access only for admin"))
-				return
-			}
 		}
 
 		s.Respond(w, r, http.StatusOK, aboutMeResponseBody{

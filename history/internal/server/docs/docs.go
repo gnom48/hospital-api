@@ -15,44 +15,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/Hospitals": {
-            "get": {
-                "description": "Retrieve a list of hospitals",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Hospitals"
-                ],
-                "summary": "Get list of hospitals",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Pagination start",
-                        "name": "from",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Number of records per page",
-                        "name": "count",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Authorization header",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
+        "/api/History": {
             "post": {
-                "description": "Create a new hospital record",
+                "description": "Create visit record",
                 "consumes": [
                     "application/json"
                 ],
@@ -60,17 +25,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Hospitals"
+                    "History"
                 ],
-                "summary": "Create a new hospital",
+                "summary": "Create visit history and appointment",
                 "parameters": [
                     {
-                        "description": "Hospital object",
-                        "name": "hospital",
+                        "description": "History object",
+                        "name": "history",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/server.createUpdateHospitalRequestBody"
+                            "$ref": "#/definitions/server.createHistoryRequestBody"
                         }
                     },
                     {
@@ -84,9 +49,9 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/api/Hospitals/{id}": {
+        "/api/History/Account/{id}": {
             "get": {
-                "description": "Retrieve hospital information by hospital ID",
+                "description": "Retrieve records where {pacientId} = {id}",
                 "consumes": [
                     "application/json"
                 ],
@@ -94,13 +59,45 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Hospitals"
+                    "History"
                 ],
-                "summary": "Get hospital information by ID",
+                "summary": "Get visit history and appointments for an account",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Hospital ID",
+                        "description": "Patient ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization header",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/History/{id}": {
+            "get": {
+                "description": "Retrieve visit and appointment details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "History"
+                ],
+                "summary": "Get detailed information about a visit and appointments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "History ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -116,7 +113,7 @@ const docTemplate = `{
                 "responses": {}
             },
             "put": {
-                "description": "Update hospital information",
+                "description": "Update visit record",
                 "consumes": [
                     "application/json"
                 ],
@@ -124,87 +121,25 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Hospitals"
+                    "History"
                 ],
-                "summary": "Update hospital information by ID",
+                "summary": "Update visit history and appointment",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Hospital ID",
+                        "description": "History ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Hospital object",
-                        "name": "hospital",
+                        "description": "Updated History object",
+                        "name": "history",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/server.createUpdateHospitalRequestBody"
+                            "$ref": "#/definitions/server.createHistoryRequestBody"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "Authorization header",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
-            "delete": {
-                "description": "Soft delete a hospital by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Hospitals"
-                ],
-                "summary": "Soft delete a hospital record",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Hospital ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Authorization header",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/api/Hospitals/{id}/Rooms": {
-            "get": {
-                "description": "Retrieve a list of rooms in a hospital by hospital ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Hospitals"
-                ],
-                "summary": "Get rooms by hospital ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Hospital ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
                     },
                     {
                         "type": "string",
@@ -219,23 +154,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "server.createUpdateHospitalRequestBody": {
+        "server.createHistoryRequestBody": {
             "type": "object",
             "properties": {
-                "address": {
+                "data": {
                     "type": "string"
                 },
-                "contact_phone": {
+                "date": {
                     "type": "string"
                 },
-                "name": {
+                "doctor_id": {
                     "type": "string"
                 },
-                "rooms": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "hospital_id": {
+                    "type": "string"
+                },
+                "patient_id": {
+                    "type": "string"
+                },
+                "room": {
+                    "type": "string"
                 }
             }
         }
@@ -244,12 +182,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:8082",
-	BasePath:         "/",
-	Schemes:          []string{"http"},
-	Title:            "Account",
-	Description:      "Account API documentation",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
+	Schemes:          []string{},
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

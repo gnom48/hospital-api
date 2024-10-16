@@ -47,6 +47,7 @@ func (r *Repository) GetHistoryDetailsById(historyId string) (models.VisitHistor
 }
 
 func (r *Repository) CreateVisitHistory(history models.VisitHistory) error {
+	history.Id, _ = models.GenerateUuid32()
 	_, err := r.storage.db.Exec(`
 		INSERT INTO visit_history (id, patient_id, hospital_id, doctor_id, room, visit_date, data) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`,

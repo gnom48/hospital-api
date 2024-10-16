@@ -1,61 +1,34 @@
-basePath: /
 definitions:
-  server.createUpdateHospitalRequestBody:
+  server.createHistoryRequestBody:
     properties:
-      address:
+      data:
         type: string
-      contact_phone:
+      date:
         type: string
-      name:
+      doctor_id:
         type: string
-      rooms:
-        items:
-          type: string
-        type: array
+      hospital_id:
+        type: string
+      patient_id:
+        type: string
+      room:
+        type: string
     type: object
-host: localhost:8082
 info:
   contact: {}
-  description: Account API documentation
-  title: Account
-  version: "1.0"
 paths:
-  /api/Hospitals:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve a list of hospitals
-      parameters:
-      - description: Pagination start
-        in: query
-        name: from
-        type: integer
-      - description: Number of records per page
-        in: query
-        name: count
-        type: integer
-      - description: Authorization header
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      summary: Get list of hospitals
-      tags:
-      - Hospitals
+  /api/History:
     post:
       consumes:
       - application/json
-      description: Create a new hospital record
+      description: Create visit record
       parameters:
-      - description: Hospital object
+      - description: History object
         in: body
-        name: hospital
+        name: history
         required: true
         schema:
-          $ref: '#/definitions/server.createUpdateHospitalRequestBody'
+          $ref: '#/definitions/server.createHistoryRequestBody'
       - description: Authorization header
         in: header
         name: Authorization
@@ -64,37 +37,16 @@ paths:
       produces:
       - application/json
       responses: {}
-      summary: Create a new hospital
+      summary: Create visit history and appointment
       tags:
-      - Hospitals
-  /api/Hospitals/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Soft delete a hospital by ID
-      parameters:
-      - description: Hospital ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Authorization header
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      summary: Soft delete a hospital record
-      tags:
-      - Hospitals
+      - History
+  /api/History/{id}:
     get:
       consumes:
       - application/json
-      description: Retrieve hospital information by hospital ID
+      description: Retrieve visit and appointment details
       parameters:
-      - description: Hospital ID
+      - description: History ID
         in: path
         name: id
         required: true
@@ -107,25 +59,25 @@ paths:
       produces:
       - application/json
       responses: {}
-      summary: Get hospital information by ID
+      summary: Get detailed information about a visit and appointments
       tags:
-      - Hospitals
+      - History
     put:
       consumes:
       - application/json
-      description: Update hospital information
+      description: Update visit record
       parameters:
-      - description: Hospital ID
+      - description: History ID
         in: path
         name: id
         required: true
         type: string
-      - description: Hospital object
+      - description: Updated History object
         in: body
-        name: hospital
+        name: history
         required: true
         schema:
-          $ref: '#/definitions/server.createUpdateHospitalRequestBody'
+          $ref: '#/definitions/server.createHistoryRequestBody'
       - description: Authorization header
         in: header
         name: Authorization
@@ -134,16 +86,16 @@ paths:
       produces:
       - application/json
       responses: {}
-      summary: Update hospital information by ID
+      summary: Update visit history and appointment
       tags:
-      - Hospitals
-  /api/Hospitals/{id}/Rooms:
+      - History
+  /api/History/Account/{id}:
     get:
       consumes:
       - application/json
-      description: Retrieve a list of rooms in a hospital by hospital ID
+      description: Retrieve records where {pacientId} = {id}
       parameters:
-      - description: Hospital ID
+      - description: Patient ID
         in: path
         name: id
         required: true
@@ -156,9 +108,7 @@ paths:
       produces:
       - application/json
       responses: {}
-      summary: Get rooms by hospital ID
+      summary: Get visit history and appointments for an account
       tags:
-      - Hospitals
-schemes:
-- http
+      - History
 swagger: "2.0"

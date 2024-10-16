@@ -154,8 +154,6 @@ type InfoAboutMeResponseBody struct {
 	Roles []models.Role `json:"roles"`
 }
 
-//	func (s *ApiServer) AuthByTokenMiddleware(next http.HandlerFunc) http.HandlerFunc {
-//		return func(w http.ResponseWriter, r *http.Request) {
 func (s *ApiServer) AuthByTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")

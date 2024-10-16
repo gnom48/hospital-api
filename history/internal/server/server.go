@@ -122,8 +122,16 @@ func (s *ApiServer) internalServerErrorMiddleware(next http.Handler) http.Handle
 // @BasePath /
 // @schemes http
 func (s *ApiServer) ConfigureRouter() {
-	s.router.Use(s.internalServerErrorMiddleware)
-	s.router.Use(s.loggingMiddleware)
+	authRouter := s.router.PathPrefix("/api").Subrouter()
+
+	authRouter.Use(s.internalServerErrorMiddleware)
+	authRouter.Use(s.loggingMiddleware)
+	authRouter.Use(s.AuthByTokenMiddleware)
+
+	authRouter.PathPrefix("/History/Account/{id}").Handler(s.HandleGetAccountHistory()).Methods("GET")
+	authRouter.PathPrefix("/History/{id}").Handler(s.HandleUpdateHistory()).Methods("PUT")
+	authRouter.PathPrefix("/History/{id}").Handler(s.HandleGetHistoryDetails()).Methods("GET")
+	authRouter.PathPrefix("/History").Handler(s.HandleCreateHistory()).Methods("POST")
 
 	s.router.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 }
@@ -138,8 +146,8 @@ type InfoAboutMeResponseBody struct {
 	Roles []models.Role `json:"roles"`
 }
 
-func (s *ApiServer) AuthByTokenMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *ApiServer) AuthByTokenMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
 			http.Error(w, "Authorization header is empty", http.StatusUnauthorized)
@@ -188,5 +196,5 @@ func (s *ApiServer) AuthByTokenMiddleware(next http.HandlerFunc) http.HandlerFun
 		aboutMeResponse.Token = tokenString
 		ctx := context.WithValue(r.Context(), UserContextKey, aboutMeResponse)
 		next.ServeHTTP(w, r.WithContext(ctx))
-	}
+	})
 }

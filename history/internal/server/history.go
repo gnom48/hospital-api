@@ -101,7 +101,7 @@ func (s *ApiServer) HandleCreateHistory() http.HandlerFunc {
 			return
 		}
 		// TODO: проверка на то, что у patient роль = 3
-
+		// TODO: все таки придется докинуть проверки на то что существует доктор и больница
 		var requestBody createHistoryRequestBody
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
