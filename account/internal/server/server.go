@@ -8,14 +8,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"strings"
 
 	_ "account/internal/server/docs"
 
 	models "github.com/gnom48/hospital-api-lib"
 	"github.com/gorilla/mux"
-	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -232,24 +230,4 @@ func (s *ApiServer) userRoleMiddleware(next http.Handler) http.HandlerFunc {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 	})
-}
-
-func (s *ApiServer) getUserInfoByElasticsearch(username string) (*CachedUser, error) {
-	searchResult, err := s.config.ElasticClient.Search().
-		Index("users").
-		Query(elastic.NewMatchQuery("username", username)).
-		Do(context.Background())
-
-	if err != nil {
-		return nil, err
-	}
-
-	if searchResult.TotalHits() > 0 {
-		for _, item := range searchResult.Each(reflect.TypeOf(CachedUser{})) {
-			if user, ok := item.(CachedUser); ok {
-				return &user, nil
-			}
-		}
-	}
-	return nil, nil
 }

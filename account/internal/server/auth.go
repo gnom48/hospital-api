@@ -1,19 +1,12 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	models "github.com/gnom48/hospital-api-lib"
 )
-
-type CachedUser struct {
-	Id       string `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
 
 var tokenError = fmt.Errorf("Invalid token, refresh or sign in to get a new pair")
 
@@ -48,19 +41,6 @@ func (s *ApiServer) HandleAuthenticationSignUp() http.HandlerFunc {
 		if returning, err := s.storage.Repository().AddUser(user); err != nil {
 			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, err)
 		} else {
-			if _, err := s.config.ElasticClient.Index().
-				Index("users").
-				Id(user.Id).
-				BodyJson(CachedUser{
-					Id:       returning.Id,
-					Username: returning.Username,
-					Password: returning.Password,
-				}).
-				Do(context.Background()); err != nil {
-				s.Respond(w, r, http.StatusMultiStatus, returning.Id)
-				return
-			}
-
 			s.Respond(w, r, http.StatusCreated, returning.Id)
 		}
 	}
@@ -91,42 +71,30 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 			return
 		}
 
-		var user *models.User
-		cachedUser, err := s.getUserInfoByElasticsearch(requestBody.Username)
-		if cachedUser == nil || err != nil {
-			user, err = s.storage.Repository().GetUserByUsernamePassword(requestBody.Username, requestBody.Password)
-			if err != nil {
-				s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
+		if user, err := s.storage.Repository().GetUserByUsernamePassword(string(requestBody.Username), string(requestBody.Password)); err != nil {
+			s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
+		} else {
+			creationToken, creationTokenId, cte := s.tokenSigner.GenerateCreationToken(user)
+			regularToken, regularTokenId, rte := s.tokenSigner.GenerateRegularToken(user)
+			if cte != nil || rte != nil {
+				s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Errors: "+cte.Error()+"; "+rte.Error()))
 				return
 			}
-		} else {
-			user = &models.User{
-				Id:       cachedUser.Id,
-				Username: cachedUser.Username,
-				Password: cachedUser.Password,
+
+			if _, err = s.storage.Repository().SyncToken(creationTokenId, user.Id, false); err != nil {
+				s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
+				return
 			}
-		}
+			if _, err = s.storage.Repository().SyncToken(regularTokenId, user.Id, true); err != nil {
+				s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
+				return
+			}
 
-		creationToken, creationTokenId, cte := s.tokenSigner.GenerateCreationToken(user)
-		regularToken, regularTokenId, rte := s.tokenSigner.GenerateRegularToken(user)
-		if cte != nil || rte != nil {
-			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Errors: "+cte.Error()+"; "+rte.Error()))
-			return
+			s.Respond(w, r, http.StatusCreated, TokensPairResponseBody{
+				CreationToken: creationToken,
+				RegularToken:  regularToken,
+			})
 		}
-
-		if _, err = s.storage.Repository().SyncToken(creationTokenId, user.Id, false); err != nil {
-			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
-			return
-		}
-		if _, err = s.storage.Repository().SyncToken(regularTokenId, user.Id, true); err != nil {
-			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
-			return
-		}
-
-		s.Respond(w, r, http.StatusCreated, TokensPairResponseBody{
-			CreationToken: creationToken,
-			RegularToken:  regularToken,
-		})
 	}
 }
 
