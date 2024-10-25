@@ -1,6 +1,7 @@
 package server
 
 import (
+	"account/internal/server/elasticsearch"
 	"account/internal/server/tokens"
 	"account/internal/storage"
 	"bytes"
@@ -8,32 +9,32 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"strings"
 
 	_ "account/internal/server/docs"
 
 	models "github.com/gnom48/hospital-api-lib"
 	"github.com/gorilla/mux"
-	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type ApiServer struct {
-	config      *Config
-	logger      *logrus.Logger
-	router      *mux.Router
-	storage     *storage.Storage
-	tokenSigner tokens.TokenSigner
+	config                  *Config
+	logger                  *logrus.Logger
+	router                  *mux.Router
+	storage                 *storage.Storage
+	tokenSigner             tokens.TokenSigner
+	elasticsearchConnection *elasticsearch.ElasticsearchConnection
 }
 
 func New(config *Config) *ApiServer {
 	return &ApiServer{
-		config:      config,
-		logger:      logrus.New(),
-		router:      mux.NewRouter(),
-		tokenSigner: &tokens.TokenSign{},
+		config:                  config,
+		logger:                  logrus.New(),
+		router:                  mux.NewRouter(),
+		tokenSigner:             &tokens.TokenSign{},
+		elasticsearchConnection: &elasticsearch.ElasticsearchConnection{},
 	}
 }
 
@@ -51,6 +52,12 @@ func (s *ApiServer) Start() error {
 		return err
 	}
 	s.logger.Info("Storage configured")
+
+	if err := s.elasticsearchConnection.Repository().CreateElasticsearchIndexes(); err != nil {
+		s.logger.Error(err)
+		return err
+	}
+	s.logger.Info("Elasticsearch configured")
 
 	s.logger.Info("Starting ApiServer")
 	return http.ListenAndServe(s.config.BindAddress, s.router)
@@ -112,7 +119,7 @@ func (s *ApiServer) internalServerErrorMiddleware(next http.Handler) http.Handle
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				s.ErrorRespond(w, r, http.StatusNotImplemented, fmt.Errorf("Error: %v", err))
+				s.ErrorRespond(w, r, http.StatusNotImplemented, fmt.Errorf("Internal Server Error: %v", err))
 			}
 		}()
 		next.ServeHTTP(w, r)
@@ -168,14 +175,22 @@ func (s *ApiServer) AuthRegularTokenMiddleware(next http.HandlerFunc) http.Handl
 			return
 		}
 
-		user, err := s.storage.Repository().GetUserById(claims.UserId)
-		if err != nil {
-			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
-			return
+		var user *models.User
+		if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByIdElasticsearch(claims.UserId); err != nil {
+			user, err = s.storage.Repository().GetUserById(claims.UserId)
+			if err != nil {
+				s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+				return
+			}
+		} else {
+			user = &models.User{
+				Id:       cachedUser.Id,
+				Username: cachedUser.Username,
+				Password: cachedUser.Password,
+			}
 		}
 
 		ctx := context.WithValue(r.Context(), UserContextKey, *user)
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
@@ -200,14 +215,22 @@ func (s *ApiServer) AuthCreationTokenMiddleware(next http.HandlerFunc) http.Hand
 			return
 		}
 
-		user, err := s.storage.Repository().GetUserById(claims.UserId)
-		if err != nil {
-			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
-			return
+		var user *models.User
+		if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByLoginPasswordElasticsearch(claims.Username, claims.Password); err != nil {
+			user, err = s.storage.Repository().GetUserByUsernamePassword(claims.Username, claims.Password)
+			if err != nil {
+				s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+				return
+			}
+		} else {
+			user = &models.User{
+				Id:       cachedUser.Id,
+				Username: cachedUser.Username,
+				Password: cachedUser.Password,
+			}
 		}
 
 		ctx := context.WithValue(r.Context(), UserContextKey, *user)
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
@@ -232,24 +255,4 @@ func (s *ApiServer) userRoleMiddleware(next http.Handler) http.HandlerFunc {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 	})
-}
-
-func (s *ApiServer) getUserInfoByElasticsearch(username string) (*CachedUser, error) {
-	searchResult, err := s.config.ElasticClient.Search().
-		Index("users").
-		Query(elastic.NewMatchQuery("username", username)).
-		Do(context.Background())
-
-	if err != nil {
-		return nil, err
-	}
-
-	if searchResult.TotalHits() > 0 {
-		for _, item := range searchResult.Each(reflect.TypeOf(CachedUser{})) {
-			if user, ok := item.(CachedUser); ok {
-				return &user, nil
-			}
-		}
-	}
-	return nil, nil
 }

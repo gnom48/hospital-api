@@ -1,19 +1,12 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	models "github.com/gnom48/hospital-api-lib"
 )
-
-type CachedUser struct {
-	Id       string `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
 
 var tokenError = fmt.Errorf("Invalid token, refresh or sign in to get a new pair")
 
@@ -48,19 +41,12 @@ func (s *ApiServer) HandleAuthenticationSignUp() http.HandlerFunc {
 		if returning, err := s.storage.Repository().AddUser(user); err != nil {
 			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, err)
 		} else {
-			if _, err := s.config.ElasticClient.Index().
-				Index("users").
-				Id(user.Id).
-				BodyJson(CachedUser{
-					Id:       returning.Id,
-					Username: returning.Username,
-					Password: returning.Password,
-				}).
-				Do(context.Background()); err != nil {
+			if _, err := s.elasticsearchConnection.Repository().AddIndex(user); err == nil {
+				s.logger.Debug("user added to Elasticsearch: " + returning.Id)
 				s.Respond(w, r, http.StatusMultiStatus, returning.Id)
 				return
 			}
-
+			s.logger.Debug("couldn't add user to Elasticsearch: " + err.Error())
 			s.Respond(w, r, http.StatusCreated, returning.Id)
 		}
 	}
@@ -92,14 +78,18 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 		}
 
 		var user *models.User
-		cachedUser, err := s.getUserInfoByElasticsearch(requestBody.Username)
-		if cachedUser == nil || err != nil {
+		if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByLoginPasswordElasticsearch(requestBody.Username, requestBody.Password); err != nil {
+			s.logger.Debug("user not found by Elasticsearch: " + err.Error())
 			user, err = s.storage.Repository().GetUserByUsernamePassword(requestBody.Username, requestBody.Password)
 			if err != nil {
 				s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
 				return
 			}
+			if _, err := s.elasticsearchConnection.Repository().AddIndex(user); err != nil {
+				s.logger.Error("Elasticsearch: could'n add index: " + err.Error())
+			}
 		} else {
+			s.logger.Debug("user from Elasticsearch: " + cachedUser.Id)
 			user = &models.User{
 				Id:       cachedUser.Id,
 				Username: cachedUser.Username,
@@ -114,12 +104,12 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 			return
 		}
 
-		if _, err = s.storage.Repository().SyncToken(creationTokenId, user.Id, false); err != nil {
-			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
+		if _, err := s.storage.Repository().SyncToken(creationTokenId, user.Id, false); err != nil {
+			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error srt: %v", err))
 			return
 		}
-		if _, err = s.storage.Repository().SyncToken(regularTokenId, user.Id, true); err != nil {
-			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
+		if _, err := s.storage.Repository().SyncToken(regularTokenId, user.Id, true); err != nil {
+			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error sct: %v", err))
 			return
 		}
 

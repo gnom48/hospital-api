@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:      
   db:
     container_name: db_postgres
@@ -14,7 +12,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - shared-data:/shared
-    restart: always
+    restart: unless-stopped
     networks:
       - network
 
@@ -25,9 +23,12 @@ services:
       - "8081:8081"  
     volumes:
       - shared-data:/shared
-    restart: always
+    restart: unless-stopped
     networks:
       - network
+    depends_on:
+      - db
+      - elasticsearch
 
   hospital:
     container_name: hospital-service
@@ -36,9 +37,13 @@ services:
       - "8082:8081"
     volumes:
       - shared-data:/shared
-    restart: always
+    restart: unless-stopped
     networks:
       - network
+    depends_on:
+      - db
+      - account
+    
 
   timetable:
     container_name: timetable-service
@@ -47,9 +52,12 @@ services:
       - "8083:8081"
     volumes:
       - shared-data:/shared
-    restart: always
+    restart: unless-stopped
     networks:
       - network
+    depends_on:
+      - db
+      - account
 
   history:
     container_name: history-service
@@ -58,37 +66,40 @@ services:
       - "8084:8081"
     volumes:
       - shared-data:/shared
-    restart: always
+    restart: unless-stopped
     networks:
       - network
+    depends_on:
+      - db
+      - account
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.0.0
+    image: elasticsearch:7.17.25
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTIC_PASSWORD=password
+    restart: unless-stopped
     ports:
       - "8086:9200"
       - "9300:9300"
     volumes:
       - esdata:/usr/share/elasticsearch/data
     networks:
-      - elastic
+      - network
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.0.0
+    image: kibana:7.17.25
     container_name: kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTICSEARCH_PASSWORD=password
+    restart: unless-stopped
     ports:
       - "8087:5601"
     networks:
-      - elastic
+      - network
+    depends_on:
+      - elasticsearch
   
 
 volumes:
@@ -98,6 +109,4 @@ volumes:
 
 networks:
   network:
-    driver: bridge
-  elastic:
     driver: bridge
