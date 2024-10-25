@@ -43,7 +43,6 @@ services:
     depends_on:
       - db
       - account
-    
 
   timetable:
     container_name: timetable-service
@@ -79,6 +78,7 @@ services:
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - network.host=0.0.0.0
     restart: unless-stopped
     ports:
       - "8086:9200"

@@ -78,8 +78,9 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 		}
 
 		var user *models.User
-		if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByLoginPasswordElasticsearch(requestBody.Username, requestBody.Password); err != nil {
-			s.logger.Debug("user not found by Elasticsearch: " + err.Error())
+		if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByLoginPasswordElasticsearch(requestBody.Username, requestBody.Password); err != nil || cachedUser == nil {
+			s.logger.Debug("User not found by Elasticsearch: " + err.Error())
+			err = nil
 			user, err = s.storage.Repository().GetUserByUsernamePassword(requestBody.Username, requestBody.Password)
 			if err != nil {
 				s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
@@ -89,7 +90,7 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 				s.logger.Error("Elasticsearch: could'n add index: " + err.Error())
 			}
 		} else {
-			s.logger.Debug("user from Elasticsearch: " + cachedUser.Id)
+			s.logger.Debug("User from Elasticsearch: " + cachedUser.Id)
 			user = &models.User{
 				Id:       cachedUser.Id,
 				Username: cachedUser.Username,
