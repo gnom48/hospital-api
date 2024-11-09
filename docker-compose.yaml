@@ -1,14 +1,14 @@
 services:      
   db:
-    container_name: db_postgres
+    container_name: db_postgres_7432
     build: ./db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_PORT: 5432
+      POSTGRES_PORT: 7432
       POSTGRES_DB: postgres
     ports:
-      - "8085:5432"
+      - "8085:7432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - shared-data:/shared
