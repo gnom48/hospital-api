@@ -28,7 +28,7 @@ services:
       - network
     depends_on:
       - db
-      - elasticsearch
+      # - elasticsearch
 
   hospital:
     container_name: hospital-service
@@ -72,40 +72,40 @@ services:
       - db
       - account
 
-  elasticsearch:
-    image: elasticsearch:7.17.25
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
-      - network.host=0.0.0.0
-    restart: unless-stopped
-    ports:
-      - "8086:9200"
-      - "9300:9300"
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
-    networks:
-      - network
+  # elasticsearch:
+  #   image: elasticsearch:7.17.25
+  #   container_name: elasticsearch
+  #   environment:
+  #     - discovery.type=single-node
+  #     - ES_JAVA_OPTS=-Xms1g -Xmx1g
+  #     - network.host=0.0.0.0
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8086:9200"
+  #     - "9300:9300"
+  #   volumes:
+  #     - esdata:/usr/share/elasticsearch/data
+  #   networks:
+  #     - network
 
-  kibana:
-    image: kibana:7.17.25
-    container_name: kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    restart: unless-stopped
-    ports:
-      - "8087:5601"
-    networks:
-      - network
-    depends_on:
-      - elasticsearch
+  # kibana:
+  #   image: kibana:7.17.25
+  #   container_name: kibana
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8087:5601"
+  #   networks:
+  #     - network
+  #   depends_on:
+  #     - elasticsearch
   
 
 volumes:
   postgres-data:
   shared-data:
-  esdata:
+  # esdata:
 
 networks:
   network:
