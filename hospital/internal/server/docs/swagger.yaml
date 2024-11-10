@@ -16,8 +16,10 @@ definitions:
 host: localhost:8082
 info:
   contact: {}
-  description: Account API documentation
-  title: Account
+  description: Hospital API (Hospital microservice) documentation. Отвечает за данные
+    о больницах, подключенных к системе. Отправляет запросы в микросервис аккаунтов
+    для интроспекции токена.
+  title: Hospital
   version: "1.0"
 paths:
   /api/Hospitals:

@@ -115,9 +115,9 @@ func (s *ApiServer) internalServerErrorMiddleware(next http.Handler) http.Handle
 	})
 }
 
-// @title Account
+// @title Timetable
 // @version 1.0
-// @description Account API documentation
+// @description Timetable API (Timetable microservice) documentation. отвечает за расписание врачей и больниц, а также за запись на приём пользователем. Отправляет запросы в микросервис аккаунтов для интроспекции токена и проверки существования связанных сущностей. Отправляет запросы в микросервис больниц для проверки существования связанных сущностей.
 // @host localhost:8083
 // @BasePath /
 // @schemes http

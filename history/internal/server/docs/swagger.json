@@ -1,8 +1,16 @@
 {
+    "schemes": [
+        "http"
+    ],
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "History API (Document microservice) documentation. Отвечает за историю посещений пользователя. Отправляет запросы в микросервис аккаунтов для интроспекции токена и проверки существования связанных сущностей. Отправляет запросы в микросервис больниц для проверки существования связанных сущностей.",
+        "title": "History",
+        "contact": {},
+        "version": "1.0"
     },
+    "host": "localhost:8084",
+    "basePath": "/",
     "paths": {
         "/api/History": {
             "post": {

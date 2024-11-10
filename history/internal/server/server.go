@@ -115,10 +115,10 @@ func (s *ApiServer) internalServerErrorMiddleware(next http.Handler) http.Handle
 	})
 }
 
-// @title Account
+// @title History
 // @version 1.0
-// @description Account API documentation
-// @host localhost:8082
+// @description History API (Document microservice) documentation. Отвечает за историю посещений пользователя. Отправляет запросы в микросервис аккаунтов для интроспекции токена и проверки существования связанных сущностей. Отправляет запросы в микросервис больниц для проверки существования связанных сущностей.
+// @host localhost:8084
 // @BasePath /
 // @schemes http
 func (s *ApiServer) ConfigureRouter() {

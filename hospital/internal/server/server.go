@@ -115,9 +115,9 @@ func (s *ApiServer) internalServerErrorMiddleware(next http.Handler) http.Handle
 	})
 }
 
-// @title Account
+// @title Hospital
 // @version 1.0
-// @description Account API documentation
+// @description Hospital API (Hospital microservice) documentation. Отвечает за данные о больницах, подключенных к системе. Отправляет запросы в микросервис аккаунтов для интроспекции токена.
 // @host localhost:8082
 // @BasePath /
 // @schemes http

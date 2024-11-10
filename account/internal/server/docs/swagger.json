@@ -4,7 +4,7 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "Account API documentation",
+        "description": "Account API (Account microservice) documentation. Jтвечает за авторизацию и данные о пользователях. Все остальные сервисы зависят от него, ведьименно он выпускает JWT токен и проводит интроспекцию.",
         "title": "Account",
         "contact": {},
         "version": "1.0"

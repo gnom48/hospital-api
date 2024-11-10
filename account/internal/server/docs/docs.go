@@ -489,9 +489,11 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{"http"},
 	Title:            "Account",
-	Description:      "Account API documentation",
+	Description:      "Account API (Account microservice) documentation. Jтвечает за авторизацию и данные о пользователях. Все остальные сервисы зависят от него, ведьименно он выпускает JWT токен и проводит интроспекцию.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

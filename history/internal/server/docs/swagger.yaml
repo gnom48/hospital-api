@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   server.createHistoryRequestBody:
     properties:
@@ -14,8 +15,15 @@ definitions:
       room:
         type: string
     type: object
+host: localhost:8084
 info:
   contact: {}
+  description: History API (Document microservice) documentation. Отвечает за историю
+    посещений пользователя. Отправляет запросы в микросервис аккаунтов для интроспекции
+    токена и проверки существования связанных сущностей. Отправляет запросы в микросервис
+    больниц для проверки существования связанных сущностей.
+  title: History
+  version: "1.0"
 paths:
   /api/History:
     post:
@@ -111,4 +119,6 @@ paths:
       summary: Get visit history and appointments for an account
       tags:
       - History
+schemes:
+- http
 swagger: "2.0"

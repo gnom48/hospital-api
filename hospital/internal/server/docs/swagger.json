@@ -4,8 +4,8 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "Account API documentation",
-        "title": "Account",
+        "description": "Hospital API (Hospital microservice) documentation. Отвечает за данные о больницах, подключенных к системе. Отправляет запросы в микросервис аккаунтов для интроспекции токена.",
+        "title": "Hospital",
         "contact": {},
         "version": "1.0"
     },

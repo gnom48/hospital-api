@@ -216,7 +216,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Room Name",
+                        "description": "Room ID",
                         "name": "room",
                         "in": "path",
                         "required": true
@@ -381,13 +381,13 @@ const docTemplate = `{
         "server.timetableInfoRequestBody": {
             "type": "object",
             "properties": {
-                "doctorId": {
+                "doctor_id": {
                     "type": "string"
                 },
                 "from": {
                     "type": "string"
                 },
-                "hospitalId": {
+                "hospital_id": {
                     "type": "string"
                 },
                 "room": {
@@ -407,10 +407,12 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8083",
 	BasePath:         "/",
 	Schemes:          []string{"http"},
-	Title:            "Account",
-	Description:      "Account API documentation",
+	Title:            "Timetable",
+	Description:      "Timetable API (Timetable microservice) documentation. отвечает за расписание врачей и больниц, а также за запись на приём пользователем. Отправляет запросы в микросервис аккаунтов для интроспекции токена и проверки существования связанных сущностей. Отправляет запросы в микросервис больниц для проверки существования связанных сущностей.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

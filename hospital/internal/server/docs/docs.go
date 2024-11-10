@@ -248,10 +248,12 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8082",
 	BasePath:         "/",
 	Schemes:          []string{"http"},
-	Title:            "Account",
-	Description:      "Account API documentation",
+	Title:            "Hospital",
+	Description:      "Hospital API (Hospital microservice) documentation. Отвечает за данные о больницах, подключенных к системе. Отправляет запросы в микросервис аккаунтов для интроспекции токена.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {
