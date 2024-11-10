@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - shared-data:/shared
-    restart: unless-stopped
+    restart: always #unless-stopped
     networks:
       - network
 
@@ -23,7 +23,7 @@ services:
       - "8081:8081"  
     volumes:
       - shared-data:/shared
-    restart: unless-stopped
+    restart: always #unless-stopped
     networks:
       - network
     depends_on:
@@ -37,7 +37,7 @@ services:
       - "8082:8081"
     volumes:
       - shared-data:/shared
-    restart: unless-stopped
+    restart: always #unless-stopped
     networks:
       - network
     depends_on:
@@ -51,7 +51,7 @@ services:
       - "8083:8081"
     volumes:
       - shared-data:/shared
-    restart: unless-stopped
+    restart: always #unless-stopped
     networks:
       - network
     depends_on:
@@ -65,7 +65,7 @@ services:
       - "8084:8081"
     volumes:
       - shared-data:/shared
-    restart: unless-stopped
+    restart: always #unless-stopped
     networks:
       - network
     depends_on:
@@ -79,7 +79,7 @@ services:
   #     - discovery.type=single-node
   #     - ES_JAVA_OPTS=-Xms1g -Xmx1g
   #     - network.host=0.0.0.0
-  #   restart: unless-stopped
+  #   restart: always #unless-stopped
   #   ports:
   #     - "8086:9200"
   #     - "9300:9300"
@@ -93,7 +93,7 @@ services:
   #   container_name: kibana
   #   environment:
   #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-  #   restart: unless-stopped
+  #   restart: always #unless-stopped
   #   ports:
   #     - "8087:5601"
   #   networks:
