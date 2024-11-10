@@ -53,13 +53,13 @@ func (s *ApiServer) Start() error {
 	}
 	s.logger.Info("Storage configured")
 
-	if err := s.elasticsearchConnection.Repository().CreateElasticsearchIndexes(); err != nil {
-		s.logger.Error("Couldn't configure elasticsearch")
-		s.logger.Error(err)
-		// return err
-	} else {
-		s.logger.Info("Elasticsearch configured")
-	}
+	// if err := s.elasticsearchConnection.Repository().CreateElasticsearchIndexes(); err != nil {
+	// 	s.logger.Error("Couldn't configure elasticsearch")
+	// 	s.logger.Error(err)
+	// 	// return err
+	// } else {
+	// 	s.logger.Info("Elasticsearch configured")
+	// }
 
 	s.logger.Info("Starting ApiServer")
 	return http.ListenAndServe(s.config.BindAddress, s.router)
