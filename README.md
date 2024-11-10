@@ -2,10 +2,10 @@
 
 ## Основное задание:
 0. Database URL: http://localhost:8085 login=postgres password=postgres
-1. Account URL: http://localhost:8081/ui-swagger
-2. Hospital URL: http://localhost:8082/ui-swagger
-3. Timetable URL: http://localhost:8083/ui-swagger
-4. Document URL: http://localhost:8084/ui-swagger
+1. Account URL: http://localhost/swagger/index.html
+2. Hospital URL: http://localhost/swagger/index.html
+3. Timetable URL: http://localhost/swagger/index.html
+4. Document URL: http://localhost/swagger/index.html
 
 ## Дополнительное задание:
 - Elasticsearch URL: http://localhost:8086
