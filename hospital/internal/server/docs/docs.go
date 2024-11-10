@@ -252,8 +252,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Hospital API (Hospital microservice) documentation. Отвечает за данные о больницах, подключенных к системе. Отправляет запросы в микросервис аккаунтов для интроспекции токена.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {
