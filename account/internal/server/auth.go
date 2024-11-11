@@ -46,7 +46,7 @@ func (s *ApiServer) HandleAuthenticationSignUp() http.HandlerFunc {
 			// 	s.Respond(w, r, http.StatusMultiStatus, returning.Id)
 			// 	return
 			// }
-			s.logger.Debug("couldn't add user to Elasticsearch: " + err.Error())
+			// s.logger.Debug("couldn't add user to Elasticsearch: " + err.Error())
 			s.Respond(w, r, http.StatusCreated, returning.Id)
 		}
 	}
