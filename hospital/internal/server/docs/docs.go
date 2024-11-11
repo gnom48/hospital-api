@@ -245,9 +245,9 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "31.129.102.158:8082",
+	Host:             "gnom48/Hospital",
 	BasePath:         "/",
-	Schemes:          []string{"http"},
+	Schemes:          []string{"https"},
 	Title:            "Hospital",
 	Description:      "Hospital API (Hospital microservice) documentation. Отвечает за данные о больницах, подключенных к системе. Отправляет запросы в микросервис аккаунтов для интроспекции токена.",
 	InfoInstanceName: "swagger",

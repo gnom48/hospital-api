@@ -183,9 +183,9 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "31.129.102.158:8084",
+	Host:             "gnom48/History",
 	BasePath:         "/",
-	Schemes:          []string{"http"},
+	Schemes:          []string{"https"},
 	Title:            "History",
 	Description:      "History API (Document microservice) documentation. Отвечает за историю посещений пользователя. Отправляет запросы в микросервис аккаунтов для интроспекции токена и проверки существования связанных сущностей. Отправляет запросы в микросервис больниц для проверки существования связанных сущностей.",
 	InfoInstanceName: "swagger",
