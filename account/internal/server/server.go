@@ -151,6 +151,9 @@ func (s *ApiServer) ConfigureRouter() {
 	s.router.HandleFunc("/api/Accounts/{id}", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleUpdateAccountById()))).Methods("PUT")
 	s.router.HandleFunc("/api/Accounts/{id}", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleSoftDeleteAccountById()))).Methods("DELETE")
 
+	s.router.HandleFunc("/api/Doctors", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleGetDoctors()))).Methods("GET")
+	s.router.HandleFunc("/api/Doctors/{id}", s.AuthRegularTokenMiddleware(s.userRoleMiddleware(s.HandleGetDoctorById()))).Methods("GET")
+
 	s.router.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 }
 
