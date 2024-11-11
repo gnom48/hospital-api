@@ -180,19 +180,25 @@ func (s *ApiServer) AuthRegularTokenMiddleware(next http.HandlerFunc) http.Handl
 			return
 		}
 
-		var user *models.User
-		if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByIdElasticsearch(claims.UserId); err != nil {
-			user, err = s.storage.Repository().GetUserById(claims.UserId)
-			if err != nil {
-				s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
-				return
-			}
-		} else {
-			user = &models.User{
-				Id:       cachedUser.Id,
-				Username: cachedUser.Username,
-				Password: cachedUser.Password,
-			}
+		// var user *models.User
+		// if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByIdElasticsearch(claims.UserId); err != nil {
+		// 	user, err = s.storage.Repository().GetUserById(claims.UserId)
+		// 	if err != nil {
+		// 		s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+		// 		return
+		// 	}
+		// } else {
+		// 	user = &models.User{
+		// 		Id:       cachedUser.Id,
+		// 		Username: cachedUser.Username,
+		// 		Password: cachedUser.Password,
+		// 	}
+		// }
+
+		user, err := s.storage.Repository().GetUserById(claims.UserId)
+		if err != nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+			return
 		}
 
 		ctx := context.WithValue(r.Context(), UserContextKey, *user)
@@ -220,19 +226,25 @@ func (s *ApiServer) AuthCreationTokenMiddleware(next http.HandlerFunc) http.Hand
 			return
 		}
 
-		var user *models.User
-		if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByLoginPasswordElasticsearch(claims.Username, claims.Password); err != nil {
-			user, err = s.storage.Repository().GetUserByUsernamePassword(claims.Username, claims.Password)
-			if err != nil {
-				s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
-				return
-			}
-		} else {
-			user = &models.User{
-				Id:       cachedUser.Id,
-				Username: cachedUser.Username,
-				Password: cachedUser.Password,
-			}
+		// var user *models.User
+		// if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByLoginPasswordElasticsearch(claims.Username, claims.Password); err != nil {
+		// 	user, err = s.storage.Repository().GetUserByUsernamePassword(claims.Username, claims.Password)
+		// 	if err != nil {
+		// 		s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+		// 		return
+		// 	}
+		// } else {
+		// 	user = &models.User{
+		// 		Id:       cachedUser.Id,
+		// 		Username: cachedUser.Username,
+		// 		Password: cachedUser.Password,
+		// 	}
+		// }
+
+		user, err := s.storage.Repository().GetUserByUsernamePassword(claims.Username, claims.Password)
+		if err != nil {
+			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
+			return
 		}
 
 		ctx := context.WithValue(r.Context(), UserContextKey, *user)

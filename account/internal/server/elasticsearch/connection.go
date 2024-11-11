@@ -3,7 +3,6 @@ package elasticsearch
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/olivere/elastic/v7"
 )
@@ -40,7 +39,10 @@ func (e *ElasticsearchConnection) configureElasticsearchClient(elasticUrl string
 func (e *ElasticsearchConnection) Repository() *Repository {
 	if e.repository == nil {
 		if client, err := e.configureElasticsearchClient("http://elasticsearch:9200"); err != nil {
-			log.Fatal(err)
+			fmt.Println(err.Error())
+			e.repository = &Repository{
+				ElasticClient: nil,
+			}
 		} else {
 			e.repository = &Repository{
 				ElasticClient: client,

@@ -41,11 +41,11 @@ func (s *ApiServer) HandleAuthenticationSignUp() http.HandlerFunc {
 		if returning, err := s.storage.Repository().AddUser(user); err != nil {
 			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, err)
 		} else {
-			if _, err := s.elasticsearchConnection.Repository().AddIndex(user); err == nil {
-				s.logger.Debug("user added to Elasticsearch: " + returning.Id)
-				s.Respond(w, r, http.StatusMultiStatus, returning.Id)
-				return
-			}
+			// if _, err := s.elasticsearchConnection.Repository().AddIndex(user); err == nil {
+			// 	s.logger.Debug("user added to Elasticsearch: " + returning.Id)
+			// 	s.Respond(w, r, http.StatusMultiStatus, returning.Id)
+			// 	return
+			// }
 			s.logger.Debug("couldn't add user to Elasticsearch: " + err.Error())
 			s.Respond(w, r, http.StatusCreated, returning.Id)
 		}
@@ -77,25 +77,31 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 			return
 		}
 
-		var user *models.User
-		if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByLoginPasswordElasticsearch(requestBody.Username, requestBody.Password); err != nil || cachedUser == nil {
-			s.logger.Debug("User not found by Elasticsearch: " + err.Error())
-			err = nil
-			user, err = s.storage.Repository().GetUserByUsernamePassword(requestBody.Username, requestBody.Password)
-			if err != nil {
-				s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
-				return
-			}
-			if _, err := s.elasticsearchConnection.Repository().AddIndex(user); err != nil {
-				s.logger.Error("Elasticsearch: could'n add index: " + err.Error())
-			}
-		} else {
-			s.logger.Debug("User from Elasticsearch: " + cachedUser.Id)
-			user = &models.User{
-				Id:       cachedUser.Id,
-				Username: cachedUser.Username,
-				Password: cachedUser.Password,
-			}
+		// var user *models.User
+		// if cachedUser, err := s.elasticsearchConnection.Repository().GetUserInfoByLoginPasswordElasticsearch(requestBody.Username, requestBody.Password); err != nil || cachedUser == nil {
+		// 	s.logger.Debug("User not found by Elasticsearch: " + err.Error())
+		// 	err = nil
+		// 	user, err = s.storage.Repository().GetUserByUsernamePassword(requestBody.Username, requestBody.Password)
+		// 	if err != nil {
+		// 		s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
+		// 		return
+		// 	}
+		// 	if _, err := s.elasticsearchConnection.Repository().AddIndex(user); err != nil {
+		// 		s.logger.Error("Elasticsearch: could'n add index: " + err.Error())
+		// 	}
+		// } else {
+		// 	s.logger.Debug("User from Elasticsearch: " + cachedUser.Id)
+		// 	user = &models.User{
+		// 		Id:       cachedUser.Id,
+		// 		Username: cachedUser.Username,
+		// 		Password: cachedUser.Password,
+		// 	}
+		// }
+
+		user, err := s.storage.Repository().GetUserByUsernamePassword(requestBody.Username, requestBody.Password)
+		if err != nil {
+			s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
+			return
 		}
 
 		creationToken, creationTokenId, cte := s.tokenSigner.GenerateCreationToken(user)

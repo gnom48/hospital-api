@@ -78,11 +78,11 @@ func (s *ApiServer) HandleUpdateAccount() http.HandlerFunc {
 			return
 		}
 
-		if _, err := s.elasticsearchConnection.Repository().AddIndex(&user); err != nil {
-			s.logger.Error("Elasticsearch: " + err.Error())
-			s.Respond(w, r, http.StatusOK, nil)
-			return
-		}
+		// if _, err := s.elasticsearchConnection.Repository().AddIndex(&user); err != nil {
+		// 	s.logger.Error("Elasticsearch: " + err.Error())
+		// 	s.Respond(w, r, http.StatusOK, nil)
+		// 	return
+		// }
 		s.Respond(w, r, http.StatusMultiStatus, nil)
 	}
 }
@@ -267,17 +267,17 @@ func (s *ApiServer) HandleUpdateAccountById() http.HandlerFunc {
 				}
 			}
 
-			if _, err := s.elasticsearchConnection.Repository().AddIndex(&editableUser); err != nil {
-				s.logger.Error("Elasticsearch: " + err.Error())
-				s.Respond(w, r, http.StatusOK, struct {
-					UserId string   `json:"user_id"`
-					Errors []string `json:"errors"`
-				}{
-					UserId: editableUser.Id,
-					Errors: currentErrors,
-				})
-				return
-			}
+			// if _, err := s.elasticsearchConnection.Repository().AddIndex(&editableUser); err != nil {
+			// 	s.logger.Error("Elasticsearch: " + err.Error())
+			// 	s.Respond(w, r, http.StatusOK, struct {
+			// 		UserId string   `json:"user_id"`
+			// 		Errors []string `json:"errors"`
+			// 	}{
+			// 		UserId: editableUser.Id,
+			// 		Errors: currentErrors,
+			// 	})
+			// 	return
+			// }
 			s.Respond(w, r, http.StatusMultiStatus, struct {
 				UserId string   `json:"user_id"`
 				Errors []string `json:"errors"`
