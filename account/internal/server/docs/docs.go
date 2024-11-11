@@ -485,7 +485,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "gnom48/Account",
+	Host:             "gnom48.ru/Account",
 	BasePath:         "/",
 	Schemes:          []string{"https"},
 	Title:            "Account",
