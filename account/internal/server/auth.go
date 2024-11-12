@@ -38,6 +38,7 @@ func (s *ApiServer) HandleAuthenticationSignUp() http.HandlerFunc {
 			Username:  requestBody.Username,
 			Password:  requestBody.Password,
 		}
+		defer s.storage.Close()
 		if returning, err := s.storage.Repository().AddUser(user); err != nil {
 			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, err)
 		} else {
@@ -98,6 +99,7 @@ func (s *ApiServer) HandleAuthenticationSignIn() http.HandlerFunc {
 		// 	}
 		// }
 
+		defer s.storage.Close()
 		user, err := s.storage.Repository().GetUserByUsernamePassword(requestBody.Username, requestBody.Password)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusNotFound, fmt.Errorf("User not found"))
@@ -141,6 +143,7 @@ func (s *ApiServer) HandleAuthenticationSignOut() http.HandlerFunc {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
 		}
 
+		defer s.storage.Close()
 		res, err := s.storage.Repository().DeleteTokensPair(user.Id)
 		if !res {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, err)
@@ -167,6 +170,7 @@ func (s *ApiServer) HandleAuthenticationValidate() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		if token, err := s.storage.Repository().GetTokenById(data.ID); err != nil || token == nil {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("Token revoked"))
 			return
@@ -198,6 +202,7 @@ func (s *ApiServer) HandleAuthenticationRefresh() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		if _, err := s.storage.Repository().SyncToken(creationTokenId, user.Id, false); err != nil {
 			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, fmt.Errorf("Error: %v", err))
 			return

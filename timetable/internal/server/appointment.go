@@ -25,6 +25,7 @@ func (s *ApiServer) HandleGetAvailableAppointments() http.HandlerFunc {
 
 		timetableId := r.URL.Path[len("/api/Timetable/") : len(r.URL.Path)-len("/Appointments")]
 
+		defer s.storage.Close()
 		appointments, err := s.storage.Repository().GetAvailableAppointments(timetableId)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -62,6 +63,7 @@ func (s *ApiServer) HandleBookAppointment() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		appointmentId, err := s.storage.Repository().BookAppointment(models.Appointment{
 			UserId:          userInfo.User.Id,
 			TimetableId:     timetableId,
@@ -91,6 +93,7 @@ func (s *ApiServer) HandleCancelAppointment() http.HandlerFunc {
 		}
 
 		appointmentId := r.URL.Path[len("/api/Appointment/"):]
+		defer s.storage.Close()
 		if res, err := s.storage.Repository().HasUserBookedAppointment(appointmentId, userInfo.User.Id); err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
 			return

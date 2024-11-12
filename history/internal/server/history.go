@@ -27,6 +27,7 @@ func (s *ApiServer) HandleGetAccountHistory() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		history, err := s.storage.Repository().GetHistoryByPatientId(patientId)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -48,6 +49,7 @@ func (s *ApiServer) HandleGetAccountHistory() http.HandlerFunc {
 func (s *ApiServer) HandleGetHistoryDetails() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		historyId := r.URL.Path[len("/api/History/"):]
+		defer s.storage.Close()
 		historyDetails, err := s.storage.Repository().GetHistoryDetailsById(historyId)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -108,6 +110,7 @@ func (s *ApiServer) HandleCreateHistory() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		err := s.storage.Repository().CreateVisitHistory(requestBody.parseIntoVisitHistory())
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -144,6 +147,7 @@ func (s *ApiServer) HandleUpdateHistory() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		err := s.storage.Repository().UpdateVisitHistory(historyID, requestBody.parseIntoVisitHistory())
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)

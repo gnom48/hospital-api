@@ -65,6 +65,7 @@ func (s *ApiServer) ConfigureLogger() error {
 
 func (s *ApiServer) ConfigureStore() error {
 	st := storage.New(s.config.StorageConfig)
+	defer s.storage.Close()
 	if err := st.Open(); err != nil {
 		return err
 	}

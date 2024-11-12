@@ -27,6 +27,7 @@ func (s *ApiServer) HandleGetDoctorById() http.HandlerFunc {
 
 		id := r.URL.Path[len("/api/Doctors/"):]
 
+		defer s.storage.Close()
 		doctor, err := s.storage.Repository().GetDoctorById(id)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -63,6 +64,7 @@ func (s *ApiServer) HandleGetDoctors() http.HandlerFunc {
 		from := r.URL.Query().Get("from")
 		count := r.URL.Query().Get("count")
 
+		defer s.storage.Close()
 		doctors, err := s.storage.Repository().GetDoctors(nameFilter, from, count)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)

@@ -44,5 +44,8 @@ func (s *Storage) Repository() *Repository {
 			storage: s,
 		}
 	}
+	if s.db == nil {
+		s.Open()
+	}
 	return s.repository
 }

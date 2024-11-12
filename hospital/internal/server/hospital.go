@@ -43,6 +43,7 @@ func (s *ApiServer) HandleGetHospitals() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		hospitals, err := s.storage.Repository().GetHospitals(from, count)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -71,6 +72,7 @@ func (s *ApiServer) HandleGetHospitalById() http.HandlerFunc {
 
 		id := r.URL.Path[len("/api/Hospitals/"):]
 
+		defer s.storage.Close()
 		hospital, err := s.storage.Repository().GetHospitalById(id)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -103,6 +105,7 @@ func (s *ApiServer) HandleGetRoomsByHospitalId() http.HandlerFunc {
 
 		id := r.URL.Path[len("/api/Hospitals/") : len(r.URL.Path)-len("/Rooms")]
 
+		defer s.storage.Close()
 		rooms, err := s.storage.Repository().GetRoomsByHospitalId(id)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -146,6 +149,7 @@ func (s *ApiServer) HandleCreateHospital() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		returning, err := s.storage.Repository().AddHospital(hospitalInfo.Name, hospitalInfo.Address, hospitalInfo.ContactPhone, hospitalInfo.Rooms)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -187,6 +191,7 @@ func (s *ApiServer) HandleUpdateHospital() http.HandlerFunc {
 			Address:      hospitalInfo.Address,
 			ContactPhone: hospitalInfo.ContactPhone,
 		}
+		defer s.storage.Close()
 		err := s.storage.Repository().UpdateHospital(editableHospital, hospitalInfo.Rooms)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -215,6 +220,7 @@ func (s *ApiServer) HandleSoftDeleteHospital() http.HandlerFunc {
 
 		id := r.URL.Path[len("/api/Hospitals/"):]
 
+		defer s.storage.Close()
 		err := s.storage.Repository().DeleteHospital(id)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)

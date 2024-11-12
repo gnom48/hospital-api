@@ -73,6 +73,7 @@ func (s *ApiServer) HandleUpdateAccount() http.HandlerFunc {
 		user.FirstName = requestBody.FirstName
 		user.Password = requestBody.Password
 
+		defer s.storage.Close()
 		if err := s.storage.Repository().UpdateUser(&user); err != nil {
 			s.ErrorRespond(w, r, http.StatusBadRequest, err)
 			return
@@ -134,6 +135,7 @@ func (s *ApiServer) HandleCreateAccount() http.HandlerFunc {
 			Password:  requestBody.Password,
 		}
 
+		defer s.storage.Close()
 		if returning, err := s.storage.Repository().AddUser(newUser); err != nil {
 			s.ErrorRespond(w, r, http.StatusUnprocessableEntity, err)
 			return
@@ -201,6 +203,7 @@ func (s *ApiServer) HandleGetAllAccounts() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		accounts, err := s.storage.Repository().GetAllAccounts(from, count)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -253,6 +256,7 @@ func (s *ApiServer) HandleUpdateAccountById() http.HandlerFunc {
 			Password:  requestBody.Password,
 		}
 
+		defer s.storage.Close()
 		if err := s.storage.Repository().UpdateUser(&editableUser); err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
 		} else {
@@ -314,6 +318,7 @@ func (s *ApiServer) HandleSoftDeleteAccountById() http.HandlerFunc {
 		}
 
 		id := r.URL.Path[len("/api/Accounts/"):]
+		defer s.storage.Close()
 		if err := s.storage.Repository().SoftDeleteUser(id); err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
 			return

@@ -63,6 +63,7 @@ func (s *ApiServer) HandleCreateTimetable() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		returning, err := s.storage.Repository().AddTimetable(models.Timetable{
 			HospitalId: timetableInfo.HospitalId,
 			DoctorId:   timetableInfo.DoctorId,
@@ -103,6 +104,7 @@ func (s *ApiServer) HandleUpdateTimetableById() http.HandlerFunc {
 
 		id := r.URL.Path[len("/api/Timetable/"):]
 
+		defer s.storage.Close()
 		err := s.storage.Repository().UpdateTimetable(models.Timetable{
 			Id:         id,
 			HospitalId: timetableInfo.HospitalId,
@@ -136,6 +138,7 @@ func (s *ApiServer) HandleDeleteTimetableById() http.HandlerFunc {
 
 		id := r.URL.Path[len("/api/Timetable/"):]
 
+		defer s.storage.Close()
 		err := s.storage.Repository().DeleteTimetable(id)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -166,6 +169,7 @@ func (s *ApiServer) HandleDeleteTimetableByDoctorId() http.HandlerFunc {
 
 		doctorId := r.URL.Path[len("/api/Timetable/Doctor/"):]
 
+		defer s.storage.Close()
 		err := s.storage.Repository().DeleteTimetableByDoctorId(doctorId)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -196,6 +200,7 @@ func (s *ApiServer) HandleDeleteTimetableByHospitalId() http.HandlerFunc {
 
 		hospitalId := r.URL.Path[len("/api/Timetable/Hospital/"):]
 
+		defer s.storage.Close()
 		err := s.storage.Repository().DeleteTimetableByHospitalId(hospitalId)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -241,6 +246,7 @@ func (s *ApiServer) HandleGetTimetableByHospitalId() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		timetable, err := s.storage.Repository().GetTimetableByHospitalId(hospitalId, from, to)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -282,6 +288,7 @@ func (s *ApiServer) HandleGetTimetableByDoctorId() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		timetable, err := s.storage.Repository().GetTimetableByDoctorId(doctorId, from, to)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)
@@ -331,6 +338,7 @@ func (s *ApiServer) HandleGetTimetableByRoom() http.HandlerFunc {
 			return
 		}
 
+		defer s.storage.Close()
 		timetables, err := s.storage.Repository().GetTimetableByHospitalRoom(room, from, to)
 		if err != nil {
 			s.ErrorRespond(w, r, http.StatusInternalServerError, err)

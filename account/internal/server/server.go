@@ -78,6 +78,7 @@ func (s *ApiServer) ConfigureLogger() error {
 
 func (s *ApiServer) ConfigureStore() error {
 	st := storage.New(s.config.StorageConfig)
+	defer s.storage.Close()
 	if err := st.Open(); err != nil {
 		return err
 	}
@@ -175,6 +176,7 @@ func (s *ApiServer) AuthRegularTokenMiddleware(next http.HandlerFunc) http.Handl
 			return
 		}
 
+		defer s.storage.Close()
 		if token, err := s.storage.Repository().GetTokenById(claims.ID); err != nil || token == nil {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
 			return
@@ -220,6 +222,7 @@ func (s *ApiServer) AuthCreationTokenMiddleware(next http.HandlerFunc) http.Hand
 			return
 		}
 
+		defer s.storage.Close()
 		token, err := s.storage.Repository().GetTokenById(claims.ID)
 		if err != nil || token == nil {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, tokenError)
@@ -265,6 +268,7 @@ func (s *ApiServer) userRoleMiddleware(next http.Handler) http.HandlerFunc {
 			s.ErrorRespond(w, r, http.StatusUnauthorized, fmt.Errorf("User not found"))
 			return
 		}
+		defer s.storage.Close()
 		if userRoles, err := s.storage.Repository().GetAllUserRoles(user.Id); err != nil {
 			s.ErrorRespond(w, r, http.StatusForbidden, fmt.Errorf("Role not found"))
 		} else {
