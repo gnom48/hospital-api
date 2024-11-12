@@ -35,7 +35,11 @@ func (s *Storage) Open() error {
 }
 
 func (s *Storage) Close() {
-	s.db.Close()
+	if s != nil {
+		if s.db != nil {
+			s.db.Close()
+		}
+	}
 }
 
 func (s *Storage) Repository() *Repository {
