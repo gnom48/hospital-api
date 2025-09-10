@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/BurntSushi/toml v1.4.0
-	github.com/gnom48/hospital-api-lib v0.0.0-20241002173022-983c604a3186
+	github.com/gnom48/hospital-api-lib v2.0.0-20241002173022-983c604a3186
 	github.com/gorilla/mux v1.8.1
 	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
