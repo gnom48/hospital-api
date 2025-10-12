@@ -72,6 +72,18 @@ services:
       - db
       - account
 
+  # nginx:
+  #   container_name: nginx-service
+  #   image: nginx:latest
+  #   volumes:
+  #     - ./nginx/logs:/var/log/nginx
+  #     - ./nginx/conf.d:/etc/nginx/conf.d
+  #     - ./nginx/res:/usr/share/nginx/html
+  #   ports:
+  #     - "4444:8080"
+  #   networks:
+  #     - network
+
   # elasticsearch:
   #   image: elasticsearch:7.17.25
   #   container_name: elasticsearch
