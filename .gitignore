@@ -4,3 +4,4 @@
 /golang.ico
 /task.pdf
 ./nginx/logs/*.log
+.\nginx\logs\*.log
